@@ -1,0 +1,47 @@
+name: Mintly Autonomous Pricing Agent
+
+on:
+  schedule:
+    # Run every 20 minutes — the agent autonomously adjusts prices and settles purchases
+    - cron: '*/20 * * * *'
+  workflow_dispatch: # Allow manual trigger for testing
+
+jobs:
+  agent-cycle:
+    name: Run Pricing & Settlement Cycle
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run agent cycle
+        env:
+          # Database — Supabase Postgres (from GitHub repo secrets)
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          # Supabase direct access (fallback)
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          # Sphere SDK — testnet2 oracle (public key, safe in env)
+          SPHERE_ORACLE_API_KEY: ${{ secrets.SPHERE_ORACLE_API_KEY }}
+          SPHERE_WALLET_API_URL: ${{ secrets.SPHERE_WALLET_API_URL }}
+          SPHERE_NETWORK: testnet
+          # Agent wallet — KEEP SECRET, never commit the real mnemonic
+          AGENT_WALLET_MNEMONIC: ${{ secrets.AGENT_WALLET_MNEMONIC }}
+          AGENT_WALLET_NAMETAG: ${{ secrets.AGENT_WALLET_NAMETAG }}
+        run: npx tsx scripts/agent-run.ts
+
+      - name: Report outcome
+        if: always()
+        run: echo "Agent cycle finished at $(date -u)"
