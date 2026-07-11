@@ -124,11 +124,11 @@ if (isOwnListing) {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ sellerNametag: identity?.nametag }),
         });
-        if (!res.ok) {
+       if (!res.ok) {
           const data = await res.json() as { error?: string };
           throw new Error(data.error ?? 'Delete failed');
         }
-        router.refresh();
+        router.push('/marketplace');
       } catch (err) {
         alert(err instanceof Error ? err.message : 'Failed to remove listing');
       } finally {
