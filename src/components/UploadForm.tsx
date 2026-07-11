@@ -26,6 +26,9 @@ export default function UploadForm() {
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [dragOver, setDragOver] = useState(false);
+  const [feePaid, setFeePaid] = useState(false);
+ const [payingFee, setPayingFee] = useState(false);
+  const [feeError, setFeeError] = useState(false);
 
   const handleFile = useCallback((file: File) => {
     if (!file.type.startsWith('image/')) {
@@ -48,6 +51,33 @@ export default function UploadForm() {
     [handleFile]
   );
 
+  async function handlePayFee() {
+    if (!connected || !identity) return;
+    if (!formData.floorPriceUct || Number(formData.floorPriceUct) <= 0) {
+      setErrorMsg('Enter a floor price first');
+      return;
+    }
+    setPayingFee(true);
+    setErrorMsg('');
+    setFeeError(false);
+    try {
+      const feeAmount = Number(formData.floorPriceUct) * 0.05;
+      await createPaymentRequest(client, {
+        sellerNametag: 'pawan429',
+        buyerNametag: identity.nametag ?? identity.chainPubkey,
+        amountUct: feeAmount,
+        listingId: 'listing-fee',
+        nftTitle: formData.title || 'Untitled NFT',
+      });
+      setFeePaid(true);
+    } catch (err) {
+      setFeeError(true);
+      setErrorMsg('You cancelled the payment. Fee must be paid to list your NFT.');
+    } finally {
+      setPayingFee(false);
+    }
+  }
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!connected || !identity) return;
@@ -60,18 +90,7 @@ export default function UploadForm() {
     setStep('uploading');
     setErrorMsg('');
 
-    try {
-      const feeAmount = Number(formData.floorPriceUct) * 0.05;
-      if (feeAmount > 0) {
-        await createPaymentRequest(client, {
-          sellerNametag: 'pawan429',
-          buyerNametag: identity.nametag ?? identity.chainPubkey,
-          amountUct: feeAmount,
-          listingId: 'listing-fee',
-          nftTitle: formData.title || 'Untitled NFT',
-        });
-      }
-
+   try {
       const body = new FormData();
       body.append('image', imageFile);
       body.append('title', formData.title || 'Untitled NFT');
@@ -246,9 +265,24 @@ export default function UploadForm() {
               UCT
             </span>
           </div>
-          <p className="text-xs text-zinc-500 mt-1">
-            Listing fee: {(Number(formData.floorPriceUct || 0) * 0.05).toFixed(4)} UCT (5% of floor, paid to @pawan429)
-          </p>
+        <div className={`mt-3 p-3 rounded-xl bg-zinc-900 border flex items-center justify-between gap-3 transition-colors duration-200 ${feeError ? 'border-red-500/60' : 'border-zinc-700'}`}>
+            <span className="text-sm text-zinc-300">
+              Listing fee: <span className="text-orange-400 font-bold">{(Number(formData.floorPriceUct || 0) * 0.05).toFixed(4)} UCT</span>
+              <span className="text-zinc-500"> (5% of floor, to @pawan429)</span>
+            </span>
+            {feePaid ? (
+              <CheckCircle size={20} className="text-green-400 shrink-0" />
+            ) : (
+              <button
+                type="button"
+                onClick={handlePayFee}
+                disabled={payingFee || !formData.floorPriceUct}
+                className="px-4 py-2 rounded-lg bg-orange-500/10 border border-orange-500/30 text-orange-400 text-sm font-semibold disabled:opacity-50 shrink-0"
+              >
+                {payingFee ? 'Paying…' : 'Pay Fee'}
+              </button>
+            )}
+          </div>
         </div>
 
         {/* Agent notice */}
@@ -284,7 +318,7 @@ export default function UploadForm() {
         type="submit"
         whileHover={{ scale: 1.02 }}
         whileTap={{ scale: 0.98 }}
-        disabled={step === 'uploading' || !imageFile}
+        disabled={step === 'uploading' || !imageFile || !feePaid}
         className="w-full py-3.5 rounded-xl font-bold text-white text-base relative overflow-hidden disabled:opacity-60 disabled:cursor-not-allowed transition-all duration-200"
         style={{
           background: 'linear-gradient(135deg, #f97316, #ea580c)',
