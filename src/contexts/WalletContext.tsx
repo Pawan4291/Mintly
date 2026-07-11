@@ -60,8 +60,13 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
           setIdentity(result.identity);
           setConnected(true);
           disconnectRef.current = result.disconnect;
-          const bal = await getUctBalance(result.client);
+         const bal = await getUctBalance(result.client);
           if (!cancelled) setBalanceUct(bal);
+          setTimeout(async () => {
+            if (cancelled) return;
+            const retryBal = await getUctBalance(result.client);
+            if (!cancelled) setBalanceUct(retryBal);
+          }, 1500);
         }
       } catch {
         // silent connect failed — user needs to click Connect
@@ -72,7 +77,7 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
     return () => { cancelled = true; };
   }, []);
 
-  const connect = useCallback(async () => {
+ const connect = useCallback(async () => {
     setConnecting(true);
     try {
       const result = await connectWallet();
@@ -82,6 +87,11 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
       disconnectRef.current = result.disconnect;
       const bal = await getUctBalance(result.client);
       setBalanceUct(bal);
+      // Retry once after a short delay in case assets weren't loaded yet
+      setTimeout(async () => {
+        const retryBal = await getUctBalance(result.client);
+        setBalanceUct(retryBal);
+      }, 1500);
     } finally {
       setConnecting(false);
     }

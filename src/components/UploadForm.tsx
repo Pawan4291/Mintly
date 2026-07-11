@@ -24,6 +24,7 @@ export default function UploadForm() {
     floorPriceUct: '',
   });
   const [imageFile, setImageFile] = useState<File | null>(null);
+  const [duplicateWarning, setDuplicateWarning] = useState(false);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [dragOver, setDragOver] = useState(false);
   const [feePaid, setFeePaid] = useState(false);
@@ -50,6 +51,20 @@ export default function UploadForm() {
     },
     [handleFile]
   );
+
+  async function checkDuplicateTitle(title: string) {
+    if (!title.trim()) { setDuplicateWarning(false); return; }
+    try {
+      const res = await fetch(`/api/listings/list`);
+      const data = await res.json() as { listings?: { title: string }[] };
+      const exists = (data.listings ?? []).some(
+        (l) => l.title.trim().toLowerCase() === title.trim().toLowerCase()
+      );
+      setDuplicateWarning(exists);
+    } catch {
+      setDuplicateWarning(false);
+    }
+  }
 
   async function handlePayFee() {
     if (!connected || !identity) return;
@@ -224,7 +239,7 @@ export default function UploadForm() {
           <input
             type="text"
             value={formData.title}
-            onChange={(e) => setFormData((f) => ({ ...f, title: e.target.value }))}
+            onChange={(e) => { setFormData((f) => ({ ...f, title: e.target.value })); checkDuplicateTitle(e.target.value); }}
             placeholder="e.g. Cosmic Sphere #001"
             maxLength={80}
             className="w-full px-4 py-3 rounded-xl bg-zinc-900 border border-zinc-700 text-white placeholder-zinc-600 focus:outline-none focus:border-orange-500/50 focus:ring-1 focus:ring-orange-500/20 transition-all duration-200 text-sm"
@@ -261,6 +276,11 @@ export default function UploadForm() {
               required
               className="w-full px-4 py-3 pr-16 rounded-xl bg-zinc-900 border border-zinc-700 text-white placeholder-zinc-600 focus:outline-none focus:border-orange-500/50 focus:ring-1 focus:ring-orange-500/20 transition-all duration-200 text-sm"
             />
+            {duplicateWarning && (
+  <p className="text-xs text-red-400 mt-1.5 flex items-center gap-1">
+    ⚠ An NFT with this exact name is already listed — consider a different title.
+  </p>
+)}
             <span className="absolute right-4 top-1/2 -translate-y-1/2 text-orange-400 font-bold text-sm">
               UCT
             </span>
