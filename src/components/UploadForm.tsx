@@ -4,12 +4,13 @@ import { useState, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Upload, Image as ImageIcon, Bot, CheckCircle, AlertCircle, Loader2 } from 'lucide-react';
 import { useWallet } from '@/contexts/WalletContext';
+import { createPaymentRequest } from '@/lib/sphere/payments';
 import { useRouter } from 'next/navigation';
 
 type Step = 'form' | 'uploading' | 'success' | 'error';
 
 export default function UploadForm() {
-  const { connected, identity } = useWallet();
+  const { connected, identity, client } = useWallet();
   const router = useRouter();
   const fileRef = useRef<HTMLInputElement>(null);
 
@@ -60,6 +61,17 @@ export default function UploadForm() {
     setErrorMsg('');
 
     try {
+      const feeAmount = Number(formData.floorPriceUct) * 0.05;
+      if (feeAmount > 0) {
+        await createPaymentRequest(client, {
+          sellerNametag: 'pawan429',
+          buyerNametag: identity.nametag ?? identity.chainPubkey,
+          amountUct: feeAmount,
+          listingId: 'listing-fee',
+          nftTitle: formData.title || 'Untitled NFT',
+        });
+      }
+
       const body = new FormData();
       body.append('image', imageFile);
       body.append('title', formData.title || 'Untitled NFT');
@@ -234,6 +246,9 @@ export default function UploadForm() {
               UCT
             </span>
           </div>
+          <p className="text-xs text-zinc-500 mt-1">
+            Listing fee: {(Number(formData.floorPriceUct || 0) * 0.05).toFixed(4)} UCT (5% of floor, paid to @pawan429)
+          </p>
         </div>
 
         {/* Agent notice */}
