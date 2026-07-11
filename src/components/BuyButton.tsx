@@ -137,18 +137,36 @@ if (isOwnListing) {
     }
 
     if (confirmingDelete) {
+      async function handleDestroy() {
+        setDeleting(true);
+        await fetch(`/api/listings/${listingId}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ sellerNametag: identity?.nametag, action: 'destroy' }),
+        });
+        router.push('/marketplace');
+      }
       return (
-        <div className="flex gap-2">
-          <button
-            onClick={handleDelete}
-            disabled={deleting}
-            className="flex-1 py-3 rounded-xl text-center text-white bg-red-600 text-sm font-semibold hover:bg-red-700 transition-colors disabled:opacity-60"
-          >
-            {deleting ? 'Removing…' : 'Confirm Remove'}
-          </button>
+        <div className="space-y-2">
+          <div className="flex gap-2">
+            <button
+              onClick={handleDelete}
+              disabled={deleting}
+              className="flex-1 py-2.5 rounded-xl text-center text-white bg-orange-600 text-xs font-semibold hover:bg-orange-700 disabled:opacity-60"
+            >
+              {deleting ? 'Removing…' : 'Remove from Marketplace'}
+            </button>
+            <button
+              onClick={handleDestroy}
+              disabled={deleting}
+              className="flex-1 py-2.5 rounded-xl text-center text-white bg-red-600 text-xs font-semibold hover:bg-red-700 disabled:opacity-60"
+            >
+              {deleting ? 'Deleting…' : 'Delete Permanently'}
+            </button>
+          </div>
           <button
             onClick={() => setConfirmingDelete(false)}
-            className="flex-1 py-3 rounded-xl text-center text-zinc-300 bg-zinc-800 text-sm font-semibold hover:bg-zinc-700 transition-colors"
+            className="w-full py-2 rounded-xl text-center text-zinc-400 bg-zinc-800 text-xs font-semibold hover:bg-zinc-700"
           >
             Cancel
           </button>
