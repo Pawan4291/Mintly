@@ -1,5 +1,6 @@
 'use client';
-import { UCT_COIN_ID } from '@/lib/sphere/client';
+import { UCT_COIN_ID, uctToBaseUnitsString } from '@/lib/sphere/client';
+
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ShoppingBag, Loader2, CheckCircle, AlertCircle, Wallet } from 'lucide-react';
@@ -62,7 +63,7 @@ export default function BuyButton({
 
       // Now trigger the real Sphere payment intent on the client side
       // This opens the Sphere wallet UI for the buyer to confirm
-      const priceBaseUnits = String(Math.round(Number(currentPriceUct) * 1_000_000));
+      const priceBaseUnits = uctToBaseUnitsString(Number(currentPriceUct));
 
      await client.intent('send', {
         to: sellerNametag.startsWith('@') ? sellerNametag : `@${sellerNametag}`,
