@@ -3,7 +3,7 @@
 // Sphere wallet connect utilities using the real ConnectClient / autoConnect protocol
 // Reference: https://github.com/unicity-sphere/sphere-sdk/blob/main/docs/CONNECT.md
 
-import { SPHERE_CONFIG } from './client';
+import { SPHERE_CONFIG, formatUct } from './client';
 
 export interface WalletIdentity {
   chainPubkey: string;
@@ -131,8 +131,7 @@ export async function getUctBalance(client: any): Promise<string> {
 
     if (!uctAsset) return '0.00';
     const raw = uctAsset.totalAmount ?? uctAsset.balance ?? '0';
-    const formatted = (Number(raw) / 1_000_000).toFixed(2);
-    return formatted;
+    return formatUct(raw);
   } catch {
     return '0.00';
   }
