@@ -3,8 +3,7 @@ import { db } from '@/db';
 import { listings, priceHistory, activityFeed } from '@/db/schema';
 import { eq, count } from 'drizzle-orm';
 import { computeInitialPrice } from '@/lib/agent/pricingRule';
-import { writeFile, mkdir } from 'fs/promises';
-import path from 'path';
+import { uploadImage } from '@/lib/supabaseStorage';
 import { v4 as uuidv4 } from 'uuid';
 
 export async function POST(req: NextRequest) {
@@ -30,17 +29,12 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Floor price must be a positive number' }, { status: 400 });
     }
 
-    // Save image to public/uploads (in production this would go to Supabase Storage)
-    const bytes = await imageFile.arrayBuffer();
+   const bytes = await imageFile.arrayBuffer();
     const buffer = Buffer.from(bytes);
     const ext = imageFile.name.split('.').pop() ?? 'jpg';
     const fileName = `${uuidv4()}.${ext}`;
 
-    const uploadsDir = path.join(process.cwd(), 'public', 'uploads');
-    await mkdir(uploadsDir, { recursive: true });
-    await writeFile(path.join(uploadsDir, fileName), buffer);
-
-    const imageUrl = `/uploads/${fileName}`;
+    const imageUrl = await uploadImage(buffer, fileName, imageFile.type || 'image/jpeg');
 
     // Count existing listed NFTs for the supply signal
     const [{ value: competingListingsCount }] = await db
