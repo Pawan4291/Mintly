@@ -16,6 +16,8 @@ export interface ListingCardData {
   status: string;
   createdAt: string;
   lastPriceUpdateAt: string;
+  totalSupply?: number;
+  soldCount?: number;
 }
 
 interface Props {
@@ -107,7 +109,7 @@ export default function ListingCard({ listing, index = 0 }: Props) {
           </div>
         </div>
 
-        <div className="flex items-center justify-between text-xs text-zinc-600 mb-3">
+       <div className="flex items-center justify-between text-xs text-zinc-600 mb-2">
           <span className="flex items-center gap-1">
             <Clock size={10} />
             {timeLabel}
@@ -120,6 +122,12 @@ export default function ListingCard({ listing, index = 0 }: Props) {
             {isSold ? 'Sold' : isDelisted ? 'Removed' : 'Listed'}
           </span>
         </div>
+
+        {typeof listing.totalSupply === 'number' && (
+          <p className="text-xs text-zinc-500 mb-3">
+            {listing.soldCount ?? 0}/{listing.totalSupply} sold
+          </p>
+        )}
 
         <Link
           href={`/listing/${listing.id}`}

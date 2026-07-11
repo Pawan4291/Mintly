@@ -33,6 +33,9 @@ export async function POST(req: NextRequest) {
         { status: 409 }
       );
     }
+    if (listing.soldCount >= listing.totalSupply) {
+      return NextResponse.json({ error: 'Sold out' }, { status: 409 });
+    }
 
     // Prevent self-purchase
     const normalizedBuyer = buyerNametag.replace('@', '');

@@ -22,13 +22,14 @@ export default function UploadForm() {
     title: '',
     description: '',
     floorPriceUct: '',
+    totalSupply: '1',
   });
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [duplicateWarning, setDuplicateWarning] = useState(false);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [dragOver, setDragOver] = useState(false);
   const [feePaid, setFeePaid] = useState(false);
- const [payingFee, setPayingFee] = useState(false);
+  const [payingFee, setPayingFee] = useState(false);
   const [feeError, setFeeError] = useState(false);
 
   const handleFile = useCallback((file: File) => {
@@ -105,12 +106,13 @@ export default function UploadForm() {
     setStep('uploading');
     setErrorMsg('');
 
-   try {
+    try {
       const body = new FormData();
       body.append('image', imageFile);
       body.append('title', formData.title || 'Untitled NFT');
       body.append('description', formData.description);
       body.append('floorPriceUct', formData.floorPriceUct);
+      body.append('totalSupply', formData.totalSupply);
       body.append('sellerNametag', identity.nametag ?? identity.chainPubkey);
       body.append('sellerAddress', identity.directAddress ?? identity.chainPubkey);
 
@@ -169,7 +171,12 @@ export default function UploadForm() {
           <motion.button
             whileHover={{ scale: 1.03 }}
             whileTap={{ scale: 0.97 }}
-            onClick={() => { setStep('form'); setImageFile(null); setImagePreview(null); setFormData({ title: '', description: '', floorPriceUct: '' }); }}
+            onClick={() => {
+              setStep('form');
+              setImageFile(null);
+              setImagePreview(null);
+              setFormData({ title: '', description: '', floorPriceUct: '', totalSupply: '1' });
+            }}
             className="px-6 py-2.5 rounded-xl font-semibold text-zinc-400 border border-zinc-700 hover:border-orange-500/30 transition-colors"
           >
             List Another
@@ -244,6 +251,11 @@ export default function UploadForm() {
             maxLength={80}
             className="w-full px-4 py-3 rounded-xl bg-zinc-900 border border-zinc-700 text-white placeholder-zinc-600 focus:outline-none focus:border-orange-500/50 focus:ring-1 focus:ring-orange-500/20 transition-all duration-200 text-sm"
           />
+          {duplicateWarning && (
+            <p className="text-xs text-red-400 mt-1.5 flex items-center gap-1">
+              ⚠ An NFT with this exact name is already listed — consider a different title.
+            </p>
+          )}
         </div>
 
         <div>
@@ -276,33 +288,45 @@ export default function UploadForm() {
               required
               className="w-full px-4 py-3 pr-16 rounded-xl bg-zinc-900 border border-zinc-700 text-white placeholder-zinc-600 focus:outline-none focus:border-orange-500/50 focus:ring-1 focus:ring-orange-500/20 transition-all duration-200 text-sm"
             />
-            {duplicateWarning && (
-  <p className="text-xs text-red-400 mt-1.5 flex items-center gap-1">
-    ⚠ An NFT with this exact name is already listed — consider a different title.
-  </p>
-)}
             <span className="absolute right-4 top-1/2 -translate-y-1/2 text-orange-400 font-bold text-sm">
               UCT
             </span>
           </div>
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-zinc-300 mb-1.5">
+            Total Supply
+            <span className="ml-2 text-xs text-zinc-500 font-normal">— how many copies exist</span>
+          </label>
+          <input
+            type="number"
+            value={formData.totalSupply}
+            onChange={(e) => setFormData((f) => ({ ...f, totalSupply: e.target.value }))}
+            min="1"
+            step="1"
+            required
+            className="w-full px-4 py-3 rounded-xl bg-zinc-900 border border-zinc-700 text-white placeholder-zinc-600 focus:outline-none focus:border-orange-500/50 text-sm"
+          />
+        </div>
+
         <div className={`mt-3 p-3 rounded-xl bg-zinc-900 border flex items-center justify-between gap-3 transition-colors duration-200 ${feeError ? 'border-red-500/60' : 'border-zinc-700'}`}>
-            <span className="text-sm text-zinc-300">
-              Listing fee: <span className="text-orange-400 font-bold">{(Number(formData.floorPriceUct || 0) * 0.05).toFixed(4)} UCT</span>
-              <span className="text-zinc-500"> (5% of floor, to @pawan429)</span>
-            </span>
-            {feePaid ? (
-              <CheckCircle size={20} className="text-green-400 shrink-0" />
-            ) : (
-              <button
-                type="button"
-                onClick={handlePayFee}
-                disabled={payingFee || !formData.floorPriceUct}
-                className="px-4 py-2 rounded-lg bg-orange-500/10 border border-orange-500/30 text-orange-400 text-sm font-semibold disabled:opacity-50 shrink-0"
-              >
-                {payingFee ? 'Paying…' : 'Pay Fee'}
-              </button>
-            )}
-          </div>
+          <span className="text-sm text-zinc-300">
+            Listing fee: <span className="text-orange-400 font-bold">{(Number(formData.floorPriceUct || 0) * 0.05).toFixed(4)} UCT</span>
+            <span className="text-zinc-500"> (5% of floor, to @pawan429)</span>
+          </span>
+          {feePaid ? (
+            <CheckCircle size={20} className="text-green-400 shrink-0" />
+          ) : (
+            <button
+              type="button"
+              onClick={handlePayFee}
+              disabled={payingFee || !formData.floorPriceUct}
+              className="px-4 py-2 rounded-lg bg-orange-500/10 border border-orange-500/30 text-orange-400 text-sm font-semibold disabled:opacity-50 shrink-0"
+            >
+              {payingFee ? 'Paying…' : 'Pay Fee'}
+            </button>
+          )}
         </div>
 
         {/* Agent notice */}

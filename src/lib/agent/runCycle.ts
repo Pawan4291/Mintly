@@ -146,25 +146,33 @@ export async function runCycle(): Promise<void> {
         })
         .where(eq(schema.purchases.id, purchase.id));
 
-      // Mark the related listing as sold
-      await db
-        .update(schema.listings)
-        .set({ status: 'sold' })
-        .where(eq(schema.listings.id, purchase.listingId));
-
-      // Get listing for the activity message
-      const [soldListing] = await db
+     // Get the listing first to check supply
+      const [listingBeforeUpdate] = await db
         .select()
         .from(schema.listings)
         .where(eq(schema.listings.id, purchase.listingId));
 
+      const newSoldCount = (listingBeforeUpdate?.soldCount ?? 0) + 1;
+      const isSoldOut = newSoldCount >= (listingBeforeUpdate?.totalSupply ?? 1);
+
+      // Increment soldCount; only flip status to 'sold' once supply is exhausted
+      await db
+        .update(schema.listings)
+        .set({
+          soldCount: newSoldCount,
+          status: isSoldOut ? 'sold' : 'listed',
+        })
+        .where(eq(schema.listings.id, purchase.listingId));
+
+      const soldListing = listingBeforeUpdate;
+
       // Insert activity_feed row for the confirmed sale
-      await db.insert(schema.activityFeed).values({
+     await db.insert(schema.activityFeed).values({
         listingId: purchase.listingId,
         eventType: 'sold',
         message:
           `"${soldListing?.title ?? 'NFT'}" sold to @${purchase.buyerNametag} ` +
-          `for ${purchase.priceUct} UCT ` +
+          `for ${purchase.priceUct} UCT (${newSoldCount}/${listingBeforeUpdate?.totalSupply ?? 1} sold) ` +
           (statusResult.txId ? `(tx: ${statusResult.txId.slice(0, 16)}…)` : ''),
       });
     } else if (ageMs > PURCHASE_TIMEOUT_MS) {

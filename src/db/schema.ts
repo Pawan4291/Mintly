@@ -1,10 +1,4 @@
-import {
-  pgTable,
-  uuid,
-  text,
-  numeric,
-  timestamp,
-} from 'drizzle-orm/pg-core';
+import { pgTable, uuid, text, numeric, timestamp, integer } from 'drizzle-orm/pg-core';
 
 export const listings = pgTable('listings', {
   id: uuid('id').primaryKey().defaultRandom(),
@@ -14,6 +8,8 @@ export const listings = pgTable('listings', {
   title: text('title').notNull().default('Untitled NFT'),
   description: text('description').notNull().default(''),
   floorPriceUct: numeric('floor_price_uct').notNull(),
+  totalSupply: integer('total_supply').notNull().default(1),
+  soldCount: integer('sold_count').notNull().default(0),
   currentPriceUct: numeric('current_price_uct').notNull(),
   status: text('status').notNull().default('listed'),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
