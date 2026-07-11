@@ -112,9 +112,12 @@ export default function BuyButton({
     );
   }
 
- if (isOwnListing) {
+if (isOwnListing) {
+    const [confirmingDelete, setConfirmingDelete] = useState(false);
+    const [deleting, setDeleting] = useState(false);
+
     async function handleDelete() {
-      if (!confirm('Remove this NFT from the marketplace?')) return;
+      setDeleting(true);
       await fetch(`/api/listings/${listingId}`, {
         method: 'DELETE',
         headers: { 'Content-Type': 'application/json' },
@@ -122,9 +125,30 @@ export default function BuyButton({
       });
       router.refresh();
     }
+
+    if (confirmingDelete) {
+      return (
+        <div className="flex gap-2">
+          <button
+            onClick={handleDelete}
+            disabled={deleting}
+            className="flex-1 py-3 rounded-xl text-center text-white bg-red-600 text-sm font-semibold hover:bg-red-700 transition-colors disabled:opacity-60"
+          >
+            {deleting ? 'Removing…' : 'Confirm Remove'}
+          </button>
+          <button
+            onClick={() => setConfirmingDelete(false)}
+            className="flex-1 py-3 rounded-xl text-center text-zinc-300 bg-zinc-800 text-sm font-semibold hover:bg-zinc-700 transition-colors"
+          >
+            Cancel
+          </button>
+        </div>
+      );
+    }
+
     return (
       <button
-        onClick={handleDelete}
+        onClick={() => setConfirmingDelete(true)}
         className="w-full py-3 rounded-xl text-center text-red-400 bg-red-500/10 border border-red-500/30 text-sm font-semibold hover:bg-red-500/20 transition-colors"
       >
         Remove Listing
