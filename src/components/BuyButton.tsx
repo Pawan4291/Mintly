@@ -1,5 +1,5 @@
 'use client';
-
+import { UCT_COIN_ID } from '@/lib/sphere/client';
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ShoppingBag, Loader2, CheckCircle, AlertCircle, Wallet } from 'lucide-react';
@@ -64,10 +64,10 @@ export default function BuyButton({
       // This opens the Sphere wallet UI for the buyer to confirm
       const priceBaseUnits = String(Math.round(Number(currentPriceUct) * 1_000_000));
 
-      await client.intent('send', {
+     await client.intent('send', {
         to: sellerNametag.startsWith('@') ? sellerNametag : `@${sellerNametag}`,
         amount: priceBaseUnits,
-        coinId: 'uct',
+        coinId: UCT_COIN_ID,
         message: `Mintly NFT: ${nftTitle} (id: ${listingId.slice(0, 8)})`,
       });
 
