@@ -118,12 +118,22 @@ if (isOwnListing) {
 
     async function handleDelete() {
       setDeleting(true);
-      await fetch(`/api/listings/${listingId}`, {
-        method: 'DELETE',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ sellerNametag: identity?.nametag }),
-      });
-      router.refresh();
+      try {
+        const res = await fetch(`/api/listings/${listingId}`, {
+          method: 'DELETE',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ sellerNametag: identity?.nametag }),
+        });
+        if (!res.ok) {
+          const data = await res.json() as { error?: string };
+          throw new Error(data.error ?? 'Delete failed');
+        }
+        router.refresh();
+      } catch (err) {
+        alert(err instanceof Error ? err.message : 'Failed to remove listing');
+      } finally {
+        setDeleting(false);
+      }
     }
 
     if (confirmingDelete) {
