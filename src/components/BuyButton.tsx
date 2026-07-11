@@ -1,7 +1,7 @@
 'use client';
 import { UCT_COIN_ID, uctToBaseUnitsString } from '@/lib/sphere/client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ShoppingBag, Loader2, CheckCircle, AlertCircle, Wallet, Minus, Plus } from 'lucide-react';
 import { useWallet } from '@/contexts/WalletContext';
@@ -34,15 +34,26 @@ export default function BuyButton({
   const [buyState, setBuyState] = useState<BuyState>('idle');
   const [errorMsg, setErrorMsg] = useState('');
   const [purchaseId, setPurchaseId] = useState('');
-  const [quantity, setQuantity] = useState(1);
+const [quantity, setQuantity] = useState(1);
+  const [alreadyBought, setAlreadyBought] = useState(0);
   const router = useRouter();
+
+  useEffect(() => {
+    if (!identity?.nametag) return;
+    fetch(`/api/purchase/mine?listingId=${listingId}&buyerNametag=${identity.nametag}`)
+      .then((r) => r.json())
+      .then((d: { boughtQuantity?: number }) => setAlreadyBought(d.boughtQuantity ?? 0))
+      .catch(() => setAlreadyBought(0));
+  }, [identity?.nametag, listingId, buyState]);
 
   const remaining = Math.max(0, totalSupply - soldCount);
   const isSold = status === 'sold' || remaining <= 0;
   const isOwnListing = identity?.nametag === sellerNametag ||
     identity?.nametag === sellerNametag.replace('@', '');
 
-  const maxAllowed = Math.min(remaining, maxPerWallet ?? remaining) || 1;
+  const walletRemaining = maxPerWallet ? Math.max(0, maxPerWallet - alreadyBought) : remaining;
+  const maxAllowed = Math.min(remaining, walletRemaining) || 1;
+  const limitReached = maxPerWallet !== null && walletRemaining <= 0;
 
   async function handleBuy() {
     if (!connected || !identity || !client) return;
@@ -94,6 +105,7 @@ export default function BuyButton({
 
       setBuyState('success');
       setTimeout(() => {
+        setBuyState('idle');
         router.refresh();
       }, 3000);
     } catch (err) {
@@ -108,6 +120,14 @@ export default function BuyButton({
     return (
       <div className="w-full py-3 rounded-xl text-center text-zinc-500 bg-zinc-800/50 border border-zinc-700/50 font-semibold">
         Sold Out
+      </div>
+    );
+  }
+
+  if (limitReached) {
+    return (
+      <div className="w-full py-3 rounded-xl text-center text-zinc-400 bg-zinc-800/40 border border-zinc-700/40 text-sm font-medium">
+        You've minted your max ({maxPerWallet} per wallet)
       </div>
     );
   }
