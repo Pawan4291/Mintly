@@ -64,7 +64,7 @@ export default function BuyButton({
       // This opens the Sphere wallet UI for the buyer to confirm
       const priceBaseUnits = String(Math.round(Number(currentPriceUct) * 1_000_000));
 
-      await client.intent('payment_request', {
+      await client.intent('send', {
         to: sellerNametag.startsWith('@') ? sellerNametag : `@${sellerNametag}`,
         amount: priceBaseUnits,
         coinId: 'uct',
