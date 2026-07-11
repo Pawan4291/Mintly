@@ -12,11 +12,11 @@ export const SPHERE_CONFIG = {
   appUrl: typeof window !== 'undefined' ? window.location.origin : 'https://mintly.vercel.app',
 } as const;
 
-export const UCT_COIN_ID = 'uct';
+export const UCT_COIN_ID = 'f581d30f593e4b369d684a4563b5246f07b1d265f7178a2c0a82b81f39c24dc0';
 
 // Smallest UCT unit — the SDK uses bigint amounts in base units
-// UCT has 6 decimal places: 1 UCT = 1_000_000 base units
-export const UCT_DECIMALS = 6;
+// UCT has 18 decimal places: 1 UCT = 1_000_000_000_000_000_000 base units
+export const UCT_DECIMALS = 18;
 
 export function parseUct(amount: string | number): bigint {
   const n = typeof amount === 'string' ? parseFloat(amount) : amount;
