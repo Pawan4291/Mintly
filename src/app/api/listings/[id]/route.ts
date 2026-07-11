@@ -35,3 +35,30 @@ export async function GET(
     );
   }
 }
+export async function DELETE(
+  req: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const { id } = await params;
+    const { sellerNametag } = await req.json() as { sellerNametag: string };
+
+    const [listing] = await db.select().from(listings).where(eq(listings.id, id));
+    if (!listing) {
+      return NextResponse.json({ error: 'Listing not found' }, { status: 404 });
+    }
+    if (listing.sellerNametag !== sellerNametag.replace('@', '')) {
+      return NextResponse.json({ error: 'Not your listing' }, { status: 403 });
+    }
+    if (listing.status === 'sold') {
+      return NextResponse.json({ error: 'Cannot delete a sold listing' }, { status: 409 });
+    }
+
+    await db.update(listings).set({ status: 'delisted' }).where(eq(listings.id, id));
+
+    return NextResponse.json({ ok: true });
+  } catch (err) {
+    console.error('[api/listings/[id] DELETE]', err);
+    return NextResponse.json({ error: 'Failed to delete listing' }, { status: 500 });
+  }
+}

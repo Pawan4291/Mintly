@@ -112,11 +112,23 @@ export default function BuyButton({
     );
   }
 
-  if (isOwnListing) {
+ if (isOwnListing) {
+    async function handleDelete() {
+      if (!confirm('Remove this NFT from the marketplace?')) return;
+      await fetch(`/api/listings/${listingId}`, {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ sellerNametag: identity?.nametag }),
+      });
+      router.refresh();
+    }
     return (
-      <div className="w-full py-3 rounded-xl text-center text-zinc-500 bg-zinc-800/30 border border-zinc-700/30 text-sm">
-        Your listing
-      </div>
+      <button
+        onClick={handleDelete}
+        className="w-full py-3 rounded-xl text-center text-red-400 bg-red-500/10 border border-red-500/30 text-sm font-semibold hover:bg-red-500/20 transition-colors"
+      >
+        Remove Listing
+      </button>
     );
   }
 
