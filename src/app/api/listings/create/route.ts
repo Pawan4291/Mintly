@@ -29,8 +29,11 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Floor price must be a positive number' }, { status: 400 });
     }
 
-    const totalSupplyStr = formData.get('totalSupply') as string;
+   const totalSupplyStr = formData.get('totalSupply') as string;
     const totalSupply = Math.max(1, parseInt(totalSupplyStr || '1', 10));
+
+    const maxPerWalletStr = formData.get('maxPerWallet') as string;
+    const maxPerWallet = maxPerWalletStr ? parseInt(maxPerWalletStr, 10) : null;
 
    const bytes = await imageFile.arrayBuffer();
     const buffer = Buffer.from(bytes);
@@ -60,6 +63,7 @@ export async function POST(req: NextRequest) {
         floorPriceUct: String(floorPriceUct),
         currentPriceUct: String(initialPrice),
         totalSupply,
+        maxPerWallet,
       })
       .returning();
 

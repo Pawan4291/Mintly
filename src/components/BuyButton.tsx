@@ -3,7 +3,7 @@ import { UCT_COIN_ID, uctToBaseUnitsString } from '@/lib/sphere/client';
 
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ShoppingBag, Loader2, CheckCircle, AlertCircle, Wallet } from 'lucide-react';
+import { ShoppingBag, Loader2, CheckCircle, AlertCircle, Wallet, Minus, Plus } from 'lucide-react';
 import { useWallet } from '@/contexts/WalletContext';
 import { useRouter } from 'next/navigation';
 
@@ -13,6 +13,9 @@ interface Props {
   currentPriceUct: string;
   nftTitle: string;
   status: string;
+  totalSupply: number;
+  soldCount: number;
+  maxPerWallet: number | null;
 }
 
 type BuyState = 'idle' | 'loading' | 'success' | 'error';
@@ -23,16 +26,23 @@ export default function BuyButton({
   currentPriceUct,
   nftTitle,
   status,
+  totalSupply,
+  soldCount,
+  maxPerWallet,
 }: Props) {
   const { connected, identity, client } = useWallet();
   const [buyState, setBuyState] = useState<BuyState>('idle');
   const [errorMsg, setErrorMsg] = useState('');
   const [purchaseId, setPurchaseId] = useState('');
+  const [quantity, setQuantity] = useState(1);
   const router = useRouter();
 
-  const isSold = status === 'sold';
+  const remaining = Math.max(0, totalSupply - soldCount);
+  const isSold = status === 'sold' || remaining <= 0;
   const isOwnListing = identity?.nametag === sellerNametag ||
     identity?.nametag === sellerNametag.replace('@', '');
+
+  const maxAllowed = Math.min(remaining, maxPerWallet ?? remaining) || 1;
 
   async function handleBuy() {
     if (!connected || !identity || !client) return;
@@ -42,7 +52,6 @@ export default function BuyButton({
     setErrorMsg('');
 
     try {
-      // Call our API route which creates the payment request
       const res = await fetch('/api/purchase', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -50,6 +59,7 @@ export default function BuyButton({
           listingId,
           buyerNametag: identity.nametag ?? identity.chainPubkey,
           buyerAddress: identity.directAddress ?? identity.chainPubkey,
+          quantity,
         }),
       });
 
@@ -61,18 +71,16 @@ export default function BuyButton({
       const data = await res.json() as { purchaseId?: string; paymentRequestId?: string };
       setPurchaseId(data.purchaseId ?? '');
 
-      // Now trigger the real Sphere payment intent on the client side
-      // This opens the Sphere wallet UI for the buyer to confirm
-      const priceBaseUnits = uctToBaseUnitsString(Number(currentPriceUct));
+      const totalPrice = Number(currentPriceUct) * quantity;
+      const priceBaseUnits = uctToBaseUnitsString(totalPrice);
 
-     await client.intent('send', {
+      await client.intent('send', {
         to: sellerNametag.startsWith('@') ? sellerNametag : `@${sellerNametag}`,
         amount: priceBaseUnits,
         coinId: UCT_COIN_ID,
-        message: `Mintly NFT: ${nftTitle} (id: ${listingId.slice(0, 8)})`,
+        message: `Mintly NFT: ${nftTitle} x${quantity} (id: ${listingId.slice(0, 8)})`,
       });
 
-      // Confirm the purchase row with the payment request info
       if (data.purchaseId) {
         await fetch('/api/purchase/confirm', {
           method: 'POST',
@@ -99,7 +107,7 @@ export default function BuyButton({
   if (isSold) {
     return (
       <div className="w-full py-3 rounded-xl text-center text-zinc-500 bg-zinc-800/50 border border-zinc-700/50 font-semibold">
-        Sold
+        Sold Out
       </div>
     );
   }
@@ -113,7 +121,7 @@ export default function BuyButton({
     );
   }
 
-if (isOwnListing) {
+  if (isOwnListing) {
     const [confirmingDelete, setConfirmingDelete] = useState(false);
     const [deleting, setDeleting] = useState(false);
 
@@ -125,7 +133,7 @@ if (isOwnListing) {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ sellerNametag: identity?.nametag }),
         });
-       if (!res.ok) {
+        if (!res.ok) {
           const data = await res.json() as { error?: string };
           throw new Error(data.error ?? 'Delete failed');
         }
@@ -187,6 +195,31 @@ if (isOwnListing) {
 
   return (
     <div className="space-y-2">
+      {maxAllowed > 1 && buyState === 'idle' && (
+        <div className="flex items-center justify-between p-2 rounded-xl bg-zinc-900 border border-zinc-700">
+          <span className="text-xs text-zinc-400">
+            Quantity {maxPerWallet && <span className="text-zinc-600">(max {maxAllowed} per wallet)</span>}
+          </span>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => setQuantity((q) => Math.max(1, q - 1))}
+              className="w-7 h-7 rounded-lg bg-zinc-800 flex items-center justify-center text-zinc-300"
+            >
+              <Minus size={12} />
+            </button>
+            <span className="text-white font-semibold w-6 text-center">{quantity}</span>
+            <button
+              type="button"
+              onClick={() => setQuantity((q) => Math.min(maxAllowed, q + 1))}
+              className="w-7 h-7 rounded-lg bg-zinc-800 flex items-center justify-center text-zinc-300"
+            >
+              <Plus size={12} />
+            </button>
+          </div>
+        </div>
+      )}
+
       <motion.button
         whileHover={{ scale: buyState === 'idle' ? 1.02 : 1 }}
         whileTap={{ scale: buyState === 'idle' ? 0.98 : 1 }}
@@ -207,51 +240,27 @@ if (isOwnListing) {
       >
         <AnimatePresence mode="wait">
           {buyState === 'loading' && (
-            <motion.span
-              key="loading"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="flex items-center justify-center gap-2"
-            >
+            <motion.span key="loading" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="flex items-center justify-center gap-2">
               <Loader2 size={16} className="animate-spin" />
               Opening Sphere Wallet…
             </motion.span>
           )}
           {buyState === 'success' && (
-            <motion.span
-              key="success"
-              initial={{ opacity: 0, y: 8 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0 }}
-              className="flex items-center justify-center gap-2"
-            >
+            <motion.span key="success" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="flex items-center justify-center gap-2">
               <CheckCircle size={16} />
               Payment Submitted!
             </motion.span>
           )}
           {buyState === 'error' && (
-            <motion.span
-              key="error"
-              initial={{ opacity: 0, y: 8 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0 }}
-              className="flex items-center justify-center gap-2"
-            >
+            <motion.span key="error" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="flex items-center justify-center gap-2">
               <AlertCircle size={16} />
               Failed — Try Again
             </motion.span>
           )}
           {buyState === 'idle' && (
-            <motion.span
-              key="idle"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="flex items-center justify-center gap-2"
-            >
+            <motion.span key="idle" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="flex items-center justify-center gap-2">
               <ShoppingBag size={16} />
-              Buy for {Number(currentPriceUct).toFixed(4)} UCT
+              Buy {quantity > 1 ? `${quantity}x` : ''} for {(Number(currentPriceUct) * quantity).toFixed(4)} UCT
             </motion.span>
           )}
         </AnimatePresence>
@@ -259,22 +268,12 @@ if (isOwnListing) {
 
       <AnimatePresence>
         {buyState === 'success' && purchaseId && (
-          <motion.p
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: 'auto' }}
-            exit={{ opacity: 0, height: 0 }}
-            className="text-xs text-zinc-500 text-center"
-          >
+          <motion.p initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }} className="text-xs text-zinc-500 text-center">
             Purchase pending confirmation — the agent will verify on testnet2
           </motion.p>
         )}
         {buyState === 'error' && errorMsg && (
-          <motion.p
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: 'auto' }}
-            exit={{ opacity: 0, height: 0 }}
-            className="text-xs text-red-400 text-center"
-          >
+          <motion.p initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }} className="text-xs text-red-400 text-center">
             {errorMsg}
           </motion.p>
         )}

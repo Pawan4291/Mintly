@@ -152,7 +152,7 @@ export async function runCycle(): Promise<void> {
         .from(schema.listings)
         .where(eq(schema.listings.id, purchase.listingId));
 
-      const newSoldCount = (listingBeforeUpdate?.soldCount ?? 0) + 1;
+      const newSoldCount = (listingBeforeUpdate?.soldCount ?? 0) + (purchase.quantity ?? 1);
       const isSoldOut = newSoldCount >= (listingBeforeUpdate?.totalSupply ?? 1);
 
       // Increment soldCount; only flip status to 'sold' once supply is exhausted

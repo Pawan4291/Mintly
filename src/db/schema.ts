@@ -1,6 +1,7 @@
 import { pgTable, uuid, text, numeric, timestamp, integer } from 'drizzle-orm/pg-core';
 
 export const listings = pgTable('listings', {
+  maxPerWallet: integer('max_per_wallet'),
   id: uuid('id').primaryKey().defaultRandom(),
   sellerNametag: text('seller_nametag').notNull(),
   sellerAddress: text('seller_address').notNull(),
@@ -25,6 +26,7 @@ export const priceHistory = pgTable('price_history', {
 });
 
 export const purchases = pgTable('purchases', {
+  quantity: integer('quantity').notNull().default(1),
   id: uuid('id').primaryKey().defaultRandom(),
   listingId: uuid('listing_id').notNull().references(() => listings.id),
   buyerNametag: text('buyer_nametag').notNull(),

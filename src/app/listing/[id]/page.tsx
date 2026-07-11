@@ -37,6 +37,7 @@ interface ListingDetail {
   lastPriceUpdateAt: string;
   totalSupply: number;
   soldCount: number;
+  maxPerWallet: number | null;
 }
 
 export default function ListingDetailPage() {
@@ -46,9 +47,9 @@ export default function ListingDetailPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
-  useEffect(() => {
+useEffect(() => {
     if (!id) return;
-    (async () => {
+    async function fetchListing() {
       try {
         const res = await fetch(`/api/listings/${id}`);
         if (!res.ok) throw new Error('Listing not found');
@@ -60,7 +61,10 @@ export default function ListingDetailPage() {
       } finally {
         setLoading(false);
       }
-    })();
+    }
+    fetchListing();
+    const interval = setInterval(fetchListing, 15000);
+    return () => clearInterval(interval);
   }, [id]);
 
   if (loading) {
@@ -236,6 +240,9 @@ export default function ListingDetailPage() {
                 currentPriceUct={listing.currentPriceUct}
                 nftTitle={listing.title}
                 status={listing.status}
+                totalSupply={listing.totalSupply}
+                soldCount={listing.soldCount}
+                maxPerWallet={listing.maxPerWallet}
               />
             </div>
 

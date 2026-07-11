@@ -23,6 +23,7 @@ export default function UploadForm() {
     description: '',
     floorPriceUct: '',
     totalSupply: '1',
+    maxPerWallet: '',
   });
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [duplicateWarning, setDuplicateWarning] = useState(false);
@@ -113,6 +114,7 @@ export default function UploadForm() {
       body.append('description', formData.description);
       body.append('floorPriceUct', formData.floorPriceUct);
       body.append('totalSupply', formData.totalSupply);
+      body.append('maxPerWallet', formData.maxPerWallet);
       body.append('sellerNametag', identity.nametag ?? identity.chainPubkey);
       body.append('sellerAddress', identity.directAddress ?? identity.chainPubkey);
 
@@ -175,7 +177,7 @@ export default function UploadForm() {
               setStep('form');
               setImageFile(null);
               setImagePreview(null);
-              setFormData({ title: '', description: '', floorPriceUct: '', totalSupply: '1' });
+              setFormData({ title: '', description: '', floorPriceUct: '', totalSupply: '1', maxPerWallet: '' });
             }}
             className="px-6 py-2.5 rounded-xl font-semibold text-zinc-400 border border-zinc-700 hover:border-orange-500/30 transition-colors"
           >
@@ -306,6 +308,22 @@ export default function UploadForm() {
             min="1"
             step="1"
             required
+            className="w-full px-4 py-3 rounded-xl bg-zinc-900 border border-zinc-700 text-white placeholder-zinc-600 focus:outline-none focus:border-orange-500/50 text-sm"
+          />
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-zinc-300 mb-1.5">
+            Max Per Wallet
+            <span className="ml-2 text-xs text-zinc-500 font-normal">— optional, blank = unlimited</span>
+          </label>
+          <input
+            type="number"
+            value={formData.maxPerWallet}
+            onChange={(e) => setFormData((f) => ({ ...f, maxPerWallet: e.target.value }))}
+            min="1"
+            step="1"
+            placeholder="e.g. 5"
             className="w-full px-4 py-3 rounded-xl bg-zinc-900 border border-zinc-700 text-white placeholder-zinc-600 focus:outline-none focus:border-orange-500/50 text-sm"
           />
         </div>
