@@ -35,6 +35,8 @@ interface ListingDetail {
   status: string;
   createdAt: string;
   lastPriceUpdateAt: string;
+  totalSupply: number;
+  soldCount: number;
 }
 
 export default function ListingDetailPage() {
@@ -202,13 +204,17 @@ export default function ListingDetailPage() {
                     <span className="text-xl text-orange-400 ml-1">UCT</span>
                   </p>
                 </div>
-                <div className="text-right">
+               <div className="text-right">
                   <p className="text-zinc-500 text-xs mb-0.5">Floor Price</p>
                   <p className="text-xl font-bold text-zinc-300">
                     {floorNum.toFixed(4)} <span className="text-sm text-zinc-500">UCT</span>
                   </p>
                 </div>
               </div>
+
+              <p className="text-xs text-zinc-500">
+                {listing.soldCount}/{listing.totalSupply} sold
+              </p>
 
               <div className="grid grid-cols-3 gap-3 text-center">
                 {[
