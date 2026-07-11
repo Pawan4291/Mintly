@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/db';
 import { listings, priceHistory } from '@/db/schema';
 import { eq, asc } from 'drizzle-orm';
+import { deleteImage } from '@/lib/supabaseStorage';
 
 export async function GET(
   _req: NextRequest,
@@ -19,7 +20,6 @@ export async function GET(
       return NextResponse.json({ error: 'Listing not found' }, { status: 404 });
     }
 
-    // Fetch real price history for this listing
     const history = await db
       .select()
       .from(priceHistory)
@@ -35,6 +35,7 @@ export async function GET(
     );
   }
 }
+
 export async function DELETE(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -60,5 +61,37 @@ export async function DELETE(
   } catch (err) {
     console.error('[api/listings/[id] DELETE]', err);
     return NextResponse.json({ error: 'Failed to delete listing' }, { status: 500 });
+  }
+}
+
+export async function PATCH(
+  req: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const { id } = await params;
+    const { sellerNametag, action } = await req.json() as { sellerNametag: string; action: 'delist' | 'destroy' };
+
+    const [listing] = await db.select().from(listings).where(eq(listings.id, id));
+    if (!listing) return NextResponse.json({ error: 'Listing not found' }, { status: 404 });
+    if (listing.sellerNametag !== sellerNametag.replace('@', '')) {
+      return NextResponse.json({ error: 'Not your listing' }, { status: 403 });
+    }
+    if (listing.status === 'sold') {
+      return NextResponse.json({ error: 'Cannot modify a sold listing' }, { status: 409 });
+    }
+
+    if (action === 'destroy') {
+      const fileName = listing.imageUrl.split('/').pop() ?? '';
+      if (fileName) await deleteImage(fileName);
+      await db.delete(listings).where(eq(listings.id, id));
+    } else {
+      await db.update(listings).set({ status: 'delisted' }).where(eq(listings.id, id));
+    }
+
+    return NextResponse.json({ ok: true });
+  } catch (err) {
+    console.error('[api/listings/[id] PATCH]', err);
+    return NextResponse.json({ error: 'Failed to update listing' }, { status: 500 });
   }
 }

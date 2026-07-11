@@ -34,7 +34,8 @@ export default function ListingCard({ listing, index = 0 }: Props) {
   const hoursAgo = Math.round((Date.now() - createdDate.getTime()) / (1000 * 60 * 60));
   const timeLabel = hoursAgo < 1 ? 'Just now' : hoursAgo < 24 ? `${hoursAgo}h ago` : `${Math.round(hoursAgo / 24)}d ago`;
 
-  const isSold = listing.status === 'sold';
+ const isSold = listing.status === 'sold';
+  const isDelisted = listing.status === 'delisted';
 
   return (
     <motion.div
@@ -116,7 +117,7 @@ export default function ListingCard({ listing, index = 0 }: Props) {
               ? 'bg-zinc-700 text-zinc-400'
               : 'bg-orange-500/10 text-orange-400'
           }`}>
-            {isSold ? 'Sold' : 'Listed'}
+            {isSold ? 'Sold' : isDelisted ? 'Removed' : 'Listed'}
           </span>
         </div>
 
@@ -133,7 +134,7 @@ export default function ListingCard({ listing, index = 0 }: Props) {
                 }
           }
         >
-          {isSold ? 'View Details' : 'View & Buy'}
+          {isSold ? 'View Details' : isDelisted ? 'Removed' : 'View & Buy'}
         </Link>
       </div>
 

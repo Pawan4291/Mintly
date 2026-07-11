@@ -140,8 +140,41 @@ export default function MyListingsPage() {
                   </div>
                 ) : (
                   <div className="grid sm:grid-cols-2 md:grid-cols-3 gap-5">
-                    {myListings.map((listing, i) => (
-                      <ListingCard key={listing.id} listing={listing} index={i} />
+                   {myListings.map((listing, i) => (
+                      <div key={listing.id} className="space-y-2">
+                        <ListingCard listing={listing} index={i} />
+                        {listing.status === 'listed' && (
+                          <div className="flex gap-2">
+                            <button
+                              onClick={async () => {
+                                await fetch(`/api/listings/${listing.id}`, {
+                                  method: 'PATCH',
+                                  headers: { 'Content-Type': 'application/json' },
+                                  body: JSON.stringify({ sellerNametag: listing.sellerNametag, action: 'delist' }),
+                                });
+                                window.location.reload();
+                              }}
+                              className="flex-1 py-2 rounded-lg text-xs font-semibold text-orange-400 bg-orange-500/10 border border-orange-500/30"
+                            >
+                              Remove from Marketplace
+                            </button>
+                            <button
+                              onClick={async () => {
+                                if (!window.confirm('Permanently delete this NFT? This cannot be undone.')) return;
+                                await fetch(`/api/listings/${listing.id}`, {
+                                  method: 'PATCH',
+                                  headers: { 'Content-Type': 'application/json' },
+                                  body: JSON.stringify({ sellerNametag: listing.sellerNametag, action: 'destroy' }),
+                                });
+                                window.location.reload();
+                              }}
+                              className="flex-1 py-2 rounded-lg text-xs font-semibold text-red-400 bg-red-500/10 border border-red-500/30"
+                            >
+                              Delete Permanently
+                            </button>
+                          </div>
+                        )}
+                      </div>
                     ))}
                   </div>
                 )}

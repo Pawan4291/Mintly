@@ -13,3 +13,6 @@ export async function uploadImage(buffer: Buffer, fileName: string, contentType:
   const { data } = supabase.storage.from('nft-images').getPublicUrl(fileName);
   return data.publicUrl;
 }
+export async function deleteImage(fileName: string): Promise<void> {
+  await supabase.storage.from('nft-images').remove([fileName]);
+}
