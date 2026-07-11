@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/db';
-import { listings, priceHistory, activityFeed } from '@/db/schema';
+import { listings, priceHistory, activityFeed, purchases } from '@/db/schema';
 import { eq, asc } from 'drizzle-orm';
 import { deleteImage } from '@/lib/supabaseStorage';
 
@@ -84,6 +84,7 @@ export async function PATCH(
    if (action === 'destroy') {
       const fileName = listing.imageUrl.split('/').pop() ?? '';
       if (fileName) await deleteImage(fileName);
+      await db.delete(purchases).where(eq(purchases.listingId, id));
       await db.delete(activityFeed).where(eq(activityFeed.listingId, id));
       await db.delete(priceHistory).where(eq(priceHistory.listingId, id));
       await db.delete(listings).where(eq(listings.id, id));
