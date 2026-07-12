@@ -52,14 +52,20 @@ export default function ListingCard({ listing, index = 0 }: Props) {
       }}
     >
       {/* Image */}
-      <div className="relative aspect-square overflow-hidden bg-zinc-900">
+     <div className="relative aspect-square overflow-hidden bg-zinc-900">
         <Image
           src={listing.imageUrl}
           alt={listing.title}
           fill
           className="object-cover transition-transform duration-500 group-hover:scale-105"
           sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+          onError={(e) => {
+            (e.target as HTMLImageElement).style.opacity = '0';
+          }}
         />
+        <div className="absolute inset-0 -z-10 flex items-center justify-center text-zinc-700 text-xs">
+          Image unavailable
+        </div>
         {/* Sold overlay */}
         {isSold && (
           <div className="absolute inset-0 bg-black/70 flex items-center justify-center">
