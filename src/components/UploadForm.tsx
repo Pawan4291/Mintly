@@ -80,7 +80,7 @@ export default function UploadForm() {
     try {
       const feeAmount = Number(formData.floorPriceUct) * 0.05;
       await createPaymentRequest(client, {
-        sellerNametag: 'pawan429',
+        sellerNametag: 'babyboy',
         buyerNametag: identity.nametag ?? identity.chainPubkey,
         amountUct: feeAmount,
         listingId: 'listing-fee',
