@@ -13,6 +13,7 @@ interface PurchaseRow {
     id: string;
     listingId: string;
     priceUct: string;
+    quantity: number;
     status: string;
     createdAt: string;
     confirmedAt: string | null;
@@ -239,8 +240,9 @@ export default function MyListingsPage() {
                         <p className="font-bold text-white text-sm truncate">
                           {listing?.title ?? 'Unknown NFT'}
                         </p>
-                        <p className="text-zinc-500 text-xs">
+                       <p className="text-zinc-500 text-xs">
                           Paid: <span className="text-orange-400 font-medium">{Number(purchase.priceUct).toFixed(4)} UCT</span>
+                          {purchase.quantity > 1 && <span className="text-zinc-500"> · Qty: {purchase.quantity}</span>}
                         </p>
                         {purchase.txId && (
                           <p className="text-zinc-600 text-xs font-mono truncate mt-0.5">
