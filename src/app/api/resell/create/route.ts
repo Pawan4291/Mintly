@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/db';
-import { listings, activityFeed } from '@/db/schema';
+import { listings, activityFeed, purchases } from '@/db/schema';
 import { eq } from 'drizzle-orm';
 
 export async function POST(req: NextRequest) {
@@ -24,8 +24,18 @@ export async function POST(req: NextRequest) {
     }
 
     const [source] = await db.select().from(listings).where(eq(listings.id, sourceListingId));
+
+    let title = source?.title;
+    let imageUrl = source?.imageUrl;
+    let description = source?.description ?? '';
+
     if (!source) {
-      return NextResponse.json({ error: 'Original listing not found' }, { status: 404 });
+      const [origPurchase] = await db.select().from(purchases).where(eq(purchases.id, purchaseId));
+      if (!origPurchase?.nftTitle || !origPurchase?.nftImageUrl) {
+        return NextResponse.json({ error: 'Original listing not found' }, { status: 404 });
+      }
+      title = origPurchase.nftTitle;
+      imageUrl = origPurchase.nftImageUrl;
     }
 
     const [resaleListing] = await db
@@ -33,9 +43,9 @@ export async function POST(req: NextRequest) {
       .values({
         sellerNametag: sellerNametag.replace('@', ''),
         sellerAddress,
-        imageUrl: source.imageUrl,
-        title: source.title,
-        description: source.description,
+        imageUrl: imageUrl!,
+        title: title!,
+        description,
         floorPriceUct: String(fixedPriceUct),
         currentPriceUct: String(fixedPriceUct),
         totalSupply: quantity,
@@ -48,7 +58,7 @@ export async function POST(req: NextRequest) {
     await db.insert(activityFeed).values({
       listingId: resaleListing.id,
       eventType: 'listed',
-      message: `@${sellerNametag.replace('@', '')} listed "${source.title}" for instant resale — fixed price: ${fixedPriceUct} UCT`,
+      message: `@${sellerNametag.replace('@', '')} listed "${title}" for instant resale — fixed price: ${fixedPriceUct} UCT`,
     });
 
     return NextResponse.json({ listingId: resaleListing.id });

@@ -276,15 +276,15 @@ export default function MyListingsPage() {
                       <p className="text-zinc-600 text-xs mt-1">
                           {new Date(purchase.createdAt).toLocaleDateString()}
                         </p>
-                        {purchase.status === 'confirmed' && listing && availableQuantity > 0 && (
+                       {purchase.status === 'confirmed' && availableQuantity > 0 && (
                           <Link
-                            href={`/resell?purchaseId=${purchase.id}&listingId=${listing.id}&maxQty=${availableQuantity}`}
+                            href={`/resell?purchaseId=${purchase.id}&listingId=${purchase.listingId}&maxQty=${availableQuantity}`}
                             className="inline-block mt-2 text-xs font-semibold text-orange-400 bg-orange-500/10 border border-orange-500/30 rounded-lg px-2 py-1"
                           >
                             Sell Instantly
                           </Link>
                         )}
-                        {purchase.status === 'confirmed' && listing && availableQuantity === 0 && (
+                        {purchase.status === 'confirmed' && availableQuantity === 0 && (
                           <span className="inline-block mt-2 text-xs font-semibold text-green-400 bg-green-500/10 border border-green-500/30 rounded-lg px-2 py-1">
                             ALL SOLD
                           </span>
