@@ -26,10 +26,12 @@ export async function GET(req: NextRequest) {
 
     // Merge rows that belong to the same listing into one card,
     // summing quantity/price, keeping the most recent tx + status.
-    const merged = new Map<string, typeof rows[number] & { totalQuantity: number; totalPaid: number; txIds: string[]; purchaseIds: string[] }>();
+   const merged = new Map<string, typeof rows[number] & { totalQuantity: number; totalPaid: number; txIds: string[]; purchaseIds: string[] }>();
 
     for (const row of rows) {
-      const key = row.purchase.listingId as string;
+      const title = row.listing?.title ?? row.purchase.nftTitle;
+      const image = row.listing?.imageUrl ?? row.purchase.nftImageUrl;
+      const key = title && image ? `${title}|${image}` : row.purchase.id;
       const qty = row.purchase.quantity ?? 1;
       const paid = Number(row.purchase.priceUct);
 
