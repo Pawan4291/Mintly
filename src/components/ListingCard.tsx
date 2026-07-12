@@ -18,6 +18,7 @@ export interface ListingCardData {
   lastPriceUpdateAt: string;
   totalSupply?: number;
   soldCount?: number;
+  isResale?: boolean;
 }
 
 interface Props {
@@ -94,9 +95,16 @@ export default function ListingCard({ listing, index = 0 }: Props) {
         <div className="flex items-start justify-between gap-2 mb-1">
           <h3 className="font-bold text-white text-base line-clamp-1">{listing.title}</h3>
         </div>
-        <p className="text-zinc-500 text-xs mb-3 flex items-center gap-1">
-          <Tag size={10} />
-          @{listing.sellerNametag}
+       <p className="text-zinc-500 text-xs mb-3 flex items-center gap-2">
+          <span className="flex items-center gap-1">
+            <Tag size={10} />
+            @{listing.sellerNametag}
+          </span>
+          <span className={`px-1.5 py-0.5 rounded text-[10px] font-semibold ${
+            listing.isResale ? 'bg-purple-500/10 text-purple-400' : 'bg-blue-500/10 text-blue-400'
+          }`}>
+            {listing.isResale ? 'Resale' : 'Marketplace'}
+          </span>
         </p>
 
         <div className="flex items-center justify-between mb-3">
