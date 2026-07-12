@@ -82,15 +82,23 @@ const [quantity, setQuantity] = useState(1);
       const data = await res.json() as { purchaseId?: string; paymentRequestId?: string };
       setPurchaseId(data.purchaseId ?? '');
 
-      const totalPrice = Number(currentPriceUct) * quantity;
+     const totalPrice = Number(currentPriceUct) * quantity;
       const priceBaseUnits = uctToBaseUnitsString(totalPrice);
 
-      await client.intent('send', {
+     const intentResult = await client.intent('send', {
         to: sellerNametag.startsWith('@') ? sellerNametag : `@${sellerNametag}`,
         amount: priceBaseUnits,
         coinId: UCT_COIN_ID,
         message: `Mintly NFT: ${nftTitle} x${quantity} (id: ${listingId.slice(0, 8)})`,
-      });
+      }) as { txId?: string; transferId?: string; id?: string };
+
+      console.log('[Mintly] intent result:', JSON.stringify(intentResult));
+
+      const realTransferId = intentResult?.txId ?? intentResult?.transferId ?? intentResult?.id;
+
+      if (!realTransferId) {
+        throw new Error('Payment did not return a transfer ID — cannot verify on testnet2');
+      }
 
       if (data.purchaseId) {
         await fetch('/api/purchase/confirm', {
@@ -98,7 +106,7 @@ const [quantity, setQuantity] = useState(1);
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             purchaseId: data.purchaseId,
-            paymentRequestId: data.paymentRequestId ?? `pr_${Date.now()}`,
+            paymentRequestId: realTransferId,
           }),
         });
       }
