@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { motion } from 'framer-motion';
-import { Flame, LayoutGrid, Plus, Activity, User } from 'lucide-react';
+import { Flame, LayoutGrid, Plus, Activity, User, Repeat } from 'lucide-react';
 import WalletConnectButton from './WalletConnectButton';
 
 const links = [
@@ -11,6 +11,7 @@ const links = [
   { href: '/upload', label: 'Create', icon: Plus },
   { href: '/activity', label: 'Activity', icon: Activity },
   { href: '/my-listings', label: 'My NFTs', icon: User },
+  { href: '/resell', label: 'Resell', icon: Repeat },
 ];
 
 export default function Navbar() {

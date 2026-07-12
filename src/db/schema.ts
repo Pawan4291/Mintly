@@ -1,4 +1,4 @@
-import { pgTable, uuid, text, numeric, timestamp, integer } from 'drizzle-orm/pg-core';
+import { pgTable, uuid, text, numeric, timestamp, integer, boolean } from 'drizzle-orm/pg-core';
 
 export const listings = pgTable('listings', {
   maxPerWallet: integer('max_per_wallet'),
@@ -12,7 +12,9 @@ export const listings = pgTable('listings', {
   totalSupply: integer('total_supply').notNull().default(1),
   soldCount: integer('sold_count').notNull().default(0),
   currentPriceUct: numeric('current_price_uct').notNull(),
-  status: text('status').notNull().default('listed'),
+ status: text('status').notNull().default('listed'),
+  isResale: boolean('is_resale').notNull().default(false),
+  isFixedPrice: boolean('is_fixed_price').notNull().default(false),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   lastPriceUpdateAt: timestamp('last_price_update_at', { withTimezone: true }).notNull().defaultNow(),
 });

@@ -51,6 +51,10 @@ export async function runCycle(): Promise<void> {
     .where(eq(schema.listings.status, 'listed'));
 
   for (const listing of listedNFTs) {
+    if (listing.isFixedPrice) {
+      console.log(`[agent] Listing ${listing.id}: fixed-price resale, skipping decay`);
+      continue;
+    }
     const currentPrice = Number(listing.currentPriceUct);
     const floorPrice = Number(listing.floorPriceUct);
 
