@@ -26,7 +26,7 @@ export async function GET(req: NextRequest) {
 
     // Merge rows that belong to the same listing into one card,
     // summing quantity/price, keeping the most recent tx + status.
-    const merged = new Map<string, typeof rows[number] & { totalQuantity: number; totalPaid: number; txIds: string[] }>();
+    const merged = new Map<string, typeof rows[number] & { totalQuantity: number; totalPaid: number; txIds: string[]; purchaseIds: string[] }>();
 
     for (const row of rows) {
       const key = row.purchase.listingId as string;
@@ -39,26 +39,27 @@ export async function GET(req: NextRequest) {
           totalQuantity: qty,
           totalPaid: paid,
           txIds: row.purchase.txId ? [row.purchase.txId] : [],
+          purchaseIds: [row.purchase.id],
         });
       } else {
         const existing = merged.get(key)!;
         existing.totalQuantity += qty;
         existing.totalPaid += paid;
         if (row.purchase.txId) existing.txIds.push(row.purchase.txId);
-        // keep the newest purchase's status/date as representative (rows already sorted desc)
+        existing.purchaseIds.push(row.purchase.id);
       }
     }
 
-    const purchaseIds = Array.from(merged.keys());
-    const resaleRows = purchaseIds.length
+    const allPurchaseIds = rows.map((r) => r.purchase.id);
+    const resaleRows = allPurchaseIds.length
       ? await db
           .select()
           .from(listings)
-          .where(inArray(listings.sourcePurchaseId, purchaseIds))
+          .where(inArray(listings.sourcePurchaseId, allPurchaseIds))
       : [];
 
-    for (const [key, entry] of merged) {
-      const related = resaleRows.filter((r) => r.sourcePurchaseId === key);
+    for (const entry of merged.values()) {
+      const related = resaleRows.filter((r) => r.sourcePurchaseId && entry.purchaseIds.includes(r.sourcePurchaseId));
       const reserved = related
         .filter((r) => r.status === 'listed' || r.status === 'sold')
         .reduce((sum, r) => sum + r.totalSupply, 0);
