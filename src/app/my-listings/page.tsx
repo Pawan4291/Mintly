@@ -19,6 +19,8 @@ interface PurchaseRow {
     confirmedAt: string | null;
     txId: string | null;
     paymentRequestId: string | null;
+    nftTitle: string | null;
+    nftImageUrl: string | null;
   };
  listing: ListingCardData | null;
   totalQuantity: number;
@@ -235,17 +237,17 @@ export default function MyListingsPage() {
                         }`,
                       }}
                     >
-                      {listing && (
+                     {(listing || purchase.nftImageUrl) && (
                         // eslint-disable-next-line @next/next/no-img-element
                         <img
-                          src={listing.imageUrl}
-                          alt={listing.title}
+                          src={listing?.imageUrl ?? purchase.nftImageUrl ?? ''}
+                          alt={listing?.title ?? purchase.nftTitle ?? 'NFT'}
                           className="w-14 h-14 rounded-lg object-cover shrink-0"
                         />
                       )}
                       <div className="flex-1 min-w-0">
                         <p className="font-bold text-white text-sm truncate">
-                          {listing?.title ?? 'Unknown NFT'}
+                          {listing?.title ?? purchase.nftTitle ?? 'Unknown NFT'}
                         </p>
                        <p className="text-zinc-500 text-xs">
                           Paid: <span className="text-orange-400 font-medium">{totalPaid.toFixed(4)} UCT</span>

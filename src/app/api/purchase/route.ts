@@ -79,6 +79,8 @@ export async function POST(req: NextRequest) {
         sellerNametag: listing.sellerNametag,
         priceUct: String(Number(listing.currentPriceUct) * quantity),
         quantity,
+        nftTitle: listing.title,
+        nftImageUrl: listing.imageUrl,
         paymentRequestId: null, // filled after client-side Sphere intent
         status: 'pending',
       })

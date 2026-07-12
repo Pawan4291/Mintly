@@ -39,6 +39,8 @@ export const purchases = pgTable('purchases', {
   paymentRequestId: text('payment_request_id'),
   txId: text('tx_id'),
   status: text('status').notNull().default('pending'),
+  nftTitle: text('nft_title'),
+  nftImageUrl: text('nft_image_url'),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   confirmedAt: timestamp('confirmed_at', { withTimezone: true }),
 });
