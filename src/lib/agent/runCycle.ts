@@ -16,6 +16,7 @@ import * as schema from '../../db/schema';
 import {
   computeNextPrice,
   isPriceChangeSignificant,
+  computeBumpedPrice,
 } from './pricingRule';
 import { checkTransferStatus } from '../sphere/payments';
 
@@ -158,6 +159,10 @@ export async function runCycle(): Promise<void> {
 
       const newSoldCount = (listingBeforeUpdate?.soldCount ?? 0) + (purchase.quantity ?? 1);
       const isSoldOut = newSoldCount >= (listingBeforeUpdate?.totalSupply ?? 1);
+      const shouldBump = !isSoldOut && listingBeforeUpdate && !listingBeforeUpdate.isFixedPrice;
+      const bumpedPrice = shouldBump
+        ? computeBumpedPrice(Number(listingBeforeUpdate!.currentPriceUct), Number(listingBeforeUpdate!.floorPriceUct), purchase.quantity ?? 1)
+        : Number(listingBeforeUpdate?.currentPriceUct ?? 0);
 
       // Increment soldCount; only flip status to 'sold' once supply is exhausted
       await db
@@ -165,8 +170,17 @@ export async function runCycle(): Promise<void> {
         .set({
           soldCount: newSoldCount,
           status: isSoldOut ? 'sold' : 'listed',
+          ...(shouldBump ? { currentPriceUct: String(bumpedPrice), lastPriceUpdateAt: new Date() } : {}),
         })
         .where(eq(schema.listings.id, purchase.listingId));
+
+      if (shouldBump) {
+        await db.insert(schema.priceHistory).values({
+          listingId: purchase.listingId,
+          priceUct: String(bumpedPrice),
+          changedBy: 'buyer_demand',
+        });
+      }
 
       const soldListing = listingBeforeUpdate;
 

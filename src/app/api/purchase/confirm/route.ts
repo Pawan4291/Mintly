@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/db';
-import { purchases, listings, activityFeed } from '@/db/schema';
+import { purchases, listings, activityFeed, priceHistory } from '@/db/schema';
 import { eq } from 'drizzle-orm';
+import { computeBumpedPrice } from '@/lib/agent/pricingRule';
 
 export async function POST(req: NextRequest) {
   try {
@@ -27,15 +28,31 @@ export async function POST(req: NextRequest) {
       .set({ paymentRequestId, status: 'confirmed', txId: paymentRequestId, confirmedAt: new Date() })
       .where(eq(purchases.id, purchaseId));
 
-    const [listing] = await db.select().from(listings).where(eq(listings.id, purchase.listingId));
+   const [listing] = await db.select().from(listings).where(eq(listings.id, purchase.listingId));
     if (listing) {
       const newSoldCount = listing.soldCount + (purchase.quantity ?? 1);
       const isSoldOut = newSoldCount >= listing.totalSupply;
+      const shouldBump = !isSoldOut && !listing.isFixedPrice;
+      const bumpedPrice = shouldBump
+        ? computeBumpedPrice(Number(listing.currentPriceUct), Number(listing.floorPriceUct), purchase.quantity ?? 1)
+        : Number(listing.currentPriceUct);
 
       await db
         .update(listings)
-        .set({ soldCount: newSoldCount, status: isSoldOut ? 'sold' : 'listed' })
+        .set({
+          soldCount: newSoldCount,
+          status: isSoldOut ? 'sold' : 'listed',
+          ...(shouldBump ? { currentPriceUct: String(bumpedPrice), lastPriceUpdateAt: new Date() } : {}),
+        })
         .where(eq(listings.id, listing.id));
+
+      if (shouldBump) {
+        await db.insert(priceHistory).values({
+          listingId: listing.id,
+          priceUct: String(bumpedPrice),
+          changedBy: 'buyer_demand',
+        });
+      }
 
       await db.insert(activityFeed).values({
         listingId: listing.id,

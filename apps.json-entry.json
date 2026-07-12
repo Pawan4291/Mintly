@@ -2,6 +2,6 @@
   "category": "nft",
   "name": "Mintly",
   "description": "Autonomous-pricing NFT marketplace — an agent sets and settles every price, no human in the loop. Built on Unicity Sphere testnet2 with real UCT payments.",
-  "url": "https://mintly-nft.vercel.app",
-  "icon": "https://mintly-nft.vercel.app/icon.png"
+  "url": "https://mintly-sphere.vercel.app",
+  "icon": "https://mintly-sphere.vercel.app/icon.png"
 }

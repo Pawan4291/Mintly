@@ -60,6 +60,24 @@ export function computeNextPrice(
 }
 
 /**
+ * Compute the new price after a real buyer purchase — demand pushes price up.
+ * Pure, deterministic. Only applied to normal marketplace listings (not fixed-price resales).
+ */
+export function computeBumpedPrice(
+  currentPrice: number,
+  floorPrice: number,
+  quantityBought: number
+): number {
+  const BUMP_PER_UNIT = 0.08; // 8% price increase per unit bought
+  const MAX_PRICE_MULTIPLIER = 10.0; // hard cap relative to floor
+
+  const bumped = currentPrice * (1 + BUMP_PER_UNIT * quantityBought);
+  const cap = floorPrice * MAX_PRICE_MULTIPLIER;
+  const rounded = Math.round(Math.min(bumped, cap) * 10_000) / 10_000;
+  return Math.max(rounded, currentPrice);
+}
+
+/**
  * Compute the initial starting price for a new listing.
  * Starts at 3x the floor price (agent-determined premium), decaying over time.
  *
