@@ -1,11 +1,19 @@
 'use client';
 
-import { useState } from 'react';
+import { Suspense, useState } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { useWallet } from '@/contexts/WalletContext';
 import WalletConnectButton from '@/components/WalletConnectButton';
 
 export default function ResellPage() {
+  return (
+    <Suspense fallback={null}>
+      <ResellPageInner />
+    </Suspense>
+  );
+}
+
+function ResellPageInner() {
   const params = useSearchParams();
   const router = useRouter();
   const { connected, identity } = useWallet();
