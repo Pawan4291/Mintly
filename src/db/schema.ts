@@ -1,4 +1,4 @@
-import { pgTable, uuid, text, numeric, timestamp, integer, boolean } from 'drizzle-orm/pg-core';
+import { pgTable, uuid, text, numeric, timestamp, integer, boolean, type AnyPgColumn } from 'drizzle-orm/pg-core';
 
 export const listings = pgTable('listings', {
   maxPerWallet: integer('max_per_wallet'),
@@ -15,6 +15,7 @@ export const listings = pgTable('listings', {
  status: text('status').notNull().default('listed'),
   isResale: boolean('is_resale').notNull().default(false),
   isFixedPrice: boolean('is_fixed_price').notNull().default(false),
+  sourcePurchaseId: uuid('source_purchase_id').references((): AnyPgColumn => purchases.id),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   lastPriceUpdateAt: timestamp('last_price_update_at', { withTimezone: true }).notNull().defaultNow(),
 });

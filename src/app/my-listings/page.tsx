@@ -247,7 +247,12 @@ export default function MyListingsPage() {
                         </p>
                        <p className="text-zinc-500 text-xs">
                           Paid: <span className="text-orange-400 font-medium">{totalPaid.toFixed(4)} UCT</span>
-                          {totalQuantity > 1 && <span className="text-zinc-500"> · Qty: {totalQuantity}</span>}
+                          {(purchase as any).availableQuantity !== undefined && (
+                            <span className="text-zinc-500"> · Qty: {(purchase as any).availableQuantity}</span>
+                          )}
+                          {(purchase as any).soldViaResale > 0 && (
+                            <span className="text-zinc-500"> · Sold: {(purchase as any).soldViaResale}</span>
+                          )}
                         </p>
                         {txIds.length > 0 && (
                           <p className="text-zinc-600 text-xs font-mono truncate mt-0.5">
@@ -269,13 +274,18 @@ export default function MyListingsPage() {
                       <p className="text-zinc-600 text-xs mt-1">
                           {new Date(purchase.createdAt).toLocaleDateString()}
                         </p>
-                        {purchase.status === 'confirmed' && listing && (
+                        {purchase.status === 'confirmed' && listing && (purchase as any).availableQuantity > 0 && (
                           <Link
-                            href={`/resell?purchaseId=${purchase.id}&listingId=${listing.id}&maxQty=${totalQuantity}`}
+                            href={`/resell?purchaseId=${purchase.id}&listingId=${listing.id}&maxQty=${(purchase as any).availableQuantity}`}
                             className="inline-block mt-2 text-xs font-semibold text-orange-400 bg-orange-500/10 border border-orange-500/30 rounded-lg px-2 py-1"
                           >
                             Sell Instantly
                           </Link>
+                        )}
+                        {purchase.status === 'confirmed' && listing && (purchase as any).availableQuantity === 0 && (
+                          <span className="inline-block mt-2 text-xs font-semibold text-green-400 bg-green-500/10 border border-green-500/30 rounded-lg px-2 py-1">
+                            ALL SOLD
+                          </span>
                         )}
                       </div>
                     </motion.div>

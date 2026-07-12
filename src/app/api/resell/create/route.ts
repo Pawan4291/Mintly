@@ -14,7 +14,7 @@ export async function POST(req: NextRequest) {
       fixedPriceUct: number;
     };
 
-    const { sourceListingId, sellerNametag, sellerAddress, quantity, fixedPriceUct } = body;
+    const { sourceListingId, purchaseId, sellerNametag, sellerAddress, quantity, fixedPriceUct } = body;
 
     if (!sourceListingId || !sellerNametag || !sellerAddress || !quantity || !fixedPriceUct) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
@@ -41,6 +41,7 @@ export async function POST(req: NextRequest) {
         totalSupply: quantity,
         isResale: true,
         isFixedPrice: true,
+        sourcePurchaseId: purchaseId,
       })
       .returning();
 
