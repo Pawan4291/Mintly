@@ -101,6 +101,7 @@ export async function connectWallet(): Promise<{
       'transfer:request',
       'payment:request',
       'resolve:peer',
+      'history:read',
     ],
   });
 
