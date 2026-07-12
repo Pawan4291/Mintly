@@ -11,7 +11,7 @@ const links = [
   { href: '/upload', label: 'Create', icon: Plus },
   { href: '/activity', label: 'Activity', icon: Activity },
   { href: '/my-listings', label: 'My NFTs', icon: User },
-  { href: '/resell', label: 'Resell', icon: Repeat },
+  { href: '/resell/browse', label: 'Resell', icon: Repeat },
 ];
 
 export default function Navbar() {
