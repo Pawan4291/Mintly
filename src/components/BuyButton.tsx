@@ -90,7 +90,7 @@ const [quantity, setQuantity] = useState(1);
     const memoTag = `id: ${listingId.slice(0, 8)}`;
 
       await client.intent('send', {
-        to: sellerNametag.startsWith('@') ? sellerNametag : `@${sellerNametag}`,
+        recipient: sellerNametag.startsWith('@') ? sellerNametag : `@${sellerNametag}`,
         amount: priceBaseUnits,
         coinId: UCT_COIN_ID,
         message: `Mintly NFT: ${nftTitle} x${quantity} (${memoTag})`,
