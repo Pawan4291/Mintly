@@ -20,10 +20,12 @@ interface PurchaseRow {
     txId: string | null;
     paymentRequestId: string | null;
   };
-  listing: ListingCardData | null;
+ listing: ListingCardData | null;
   totalQuantity: number;
   totalPaid: number;
   txIds: string[];
+  availableQuantity: number;
+  soldViaResale: number;
 }
 
 type Tab = 'listings' | 'purchases';
@@ -215,7 +217,7 @@ export default function MyListingsPage() {
                     </Link>
                   </div>
                 ) : (
-                  myPurchases.map(({ purchase, listing, totalQuantity, totalPaid, txIds }, i) => (
+                  myPurchases.map(({ purchase, listing, totalQuantity, totalPaid, txIds, availableQuantity, soldViaResale }, i) => (
                     <motion.div
                       key={purchase.id}
                       initial={{ opacity: 0, y: 12 }}
@@ -247,11 +249,9 @@ export default function MyListingsPage() {
                         </p>
                        <p className="text-zinc-500 text-xs">
                           Paid: <span className="text-orange-400 font-medium">{totalPaid.toFixed(4)} UCT</span>
-                          {(purchase as any).availableQuantity !== undefined && (
-                            <span className="text-zinc-500"> · Qty: {(purchase as any).availableQuantity}</span>
-                          )}
-                          {(purchase as any).soldViaResale > 0 && (
-                            <span className="text-zinc-500"> · Sold: {(purchase as any).soldViaResale}</span>
+                          <span className="text-zinc-500"> · Qty: {availableQuantity}</span>
+                          {soldViaResale > 0 && (
+                            <span className="text-zinc-500"> · Sold: {soldViaResale}</span>
                           )}
                         </p>
                         {txIds.length > 0 && (
@@ -274,15 +274,15 @@ export default function MyListingsPage() {
                       <p className="text-zinc-600 text-xs mt-1">
                           {new Date(purchase.createdAt).toLocaleDateString()}
                         </p>
-                        {purchase.status === 'confirmed' && listing && (purchase as any).availableQuantity > 0 && (
+                        {purchase.status === 'confirmed' && listing && availableQuantity > 0 && (
                           <Link
-                            href={`/resell?purchaseId=${purchase.id}&listingId=${listing.id}&maxQty=${(purchase as any).availableQuantity}`}
+                            href={`/resell?purchaseId=${purchase.id}&listingId=${listing.id}&maxQty=${availableQuantity}`}
                             className="inline-block mt-2 text-xs font-semibold text-orange-400 bg-orange-500/10 border border-orange-500/30 rounded-lg px-2 py-1"
                           >
                             Sell Instantly
                           </Link>
                         )}
-                        {purchase.status === 'confirmed' && listing && (purchase as any).availableQuantity === 0 && (
+                        {purchase.status === 'confirmed' && listing && availableQuantity === 0 && (
                           <span className="inline-block mt-2 text-xs font-semibold text-green-400 bg-green-500/10 border border-green-500/30 rounded-lg px-2 py-1">
                             ALL SOLD
                           </span>
