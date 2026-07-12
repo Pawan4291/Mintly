@@ -80,7 +80,7 @@ export default function UploadForm() {
     try {
       const feeAmount = Number(formData.floorPriceUct) * 0.05;
       await createPaymentRequest(client, {
-        sellerNametag: 'babyboy',
+        sellerNametag: 'mintly',
         buyerNametag: identity.nametag ?? identity.chainPubkey,
         amountUct: feeAmount,
         listingId: 'listing-fee',
@@ -331,7 +331,7 @@ export default function UploadForm() {
         <div className={`mt-3 p-3 rounded-xl bg-zinc-900 border flex items-center justify-between gap-3 transition-colors duration-200 ${feeError ? 'border-red-500/60' : 'border-zinc-700'}`}>
           <span className="text-sm text-zinc-300">
             Listing fee: <span className="text-orange-400 font-bold">{(Number(formData.floorPriceUct || 0) * 0.05).toFixed(4)} UCT</span>
-            <span className="text-zinc-500"> (5% of floor, to @babyboy)</span>
+            <span className="text-zinc-500"> (5% of floor, to @mintly)</span>
           </span>
           {feePaid ? (
             <CheckCircle size={20} className="text-green-400 shrink-0" />
