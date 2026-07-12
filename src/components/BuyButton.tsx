@@ -105,13 +105,25 @@ const [quantity, setQuantity] = useState(1);
         recipientNametag?: string;
       }>;
 
-      const match = history.find(
+    const sellerTag = sellerNametag.replace('@', '');
+      const now = Date.now();
+
+      const candidates = history.filter(
         (h) =>
           h.type === 'SENT' &&
           h.coinId === UCT_COIN_ID &&
           h.amount === priceBaseUnits &&
-          h.memo?.includes(memoTag)
+          (h as { recipientNametag?: string }).recipientNametag === sellerTag &&
+          (h as { timestamp?: number }).timestamp &&
+          now - (h as { timestamp?: number }).timestamp! < 5 * 60 * 1000
       );
+
+      // Most recent matching transfer
+      candidates.sort(
+        (a, b) => ((b as { timestamp?: number }).timestamp ?? 0) - ((a as { timestamp?: number }).timestamp ?? 0)
+      );
+
+      const match = candidates[0];
 
       const realTransferId = match?.transferId;
 
