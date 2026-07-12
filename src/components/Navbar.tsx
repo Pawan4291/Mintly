@@ -28,18 +28,14 @@ export default function Navbar() {
     >
       <div className="max-w-7xl mx-auto flex items-center justify-between h-16">
         {/* Logo */}
-        <Link href="/" className="flex items-center gap-2 group">
-          <motion.div
+       <Link href="/" className="flex items-center gap-2 group">
+          <motion.img
+            src="/logo.png"
+            alt="Mintly"
             animate={{ rotate: [0, 10, -10, 0] }}
             transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut' }}
-            className="w-8 h-8 rounded-lg flex items-center justify-center"
-            style={{
-              background: 'linear-gradient(135deg, #f97316, #ea580c)',
-              boxShadow: '0 0 12px rgba(249,115,22,0.5)',
-            }}
-          >
-            <Flame size={16} className="text-white" />
-          </motion.div>
+            className="w-8 h-8 rounded-lg object-contain"
+          />
           <span className="font-black text-xl tracking-tight">
             <span className="text-white">Mint</span>
             <span className="text-orange-500">ly</span>

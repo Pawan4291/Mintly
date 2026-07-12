@@ -90,7 +90,7 @@ export default function HomePage() {
             }}
           >
             <div className="w-1.5 h-1.5 rounded-full bg-orange-400 animate-pulse" />
-            Built for Unicity Sphere testnet2 · Call for Builders
+            Built for Unicity Sphere testnet2
           </motion.div>
 
           {/* Headline */}
