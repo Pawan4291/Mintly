@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/db';
 import { listings, priceHistory, activityFeed, purchases } from '@/db/schema';
-import { eq, asc } from 'drizzle-orm';
+import { eq, asc, inArray } from 'drizzle-orm';
 import { deleteImage } from '@/lib/supabaseStorage';
 
 export async function GET(
@@ -85,6 +85,24 @@ export async function PATCH(
       if (listing.isResale) {
         return NextResponse.json({ error: 'Resale listings cannot be permanently deleted' }, { status: 403 });
       }
+
+      const relatedPurchases = await db.select().from(purchases).where(eq(purchases.listingId, id));
+      const purchaseIds = relatedPurchases.map((p) => p.id);
+
+      if (purchaseIds.length > 0) {
+        const resaleChildren = await db
+          .select()
+          .from(listings)
+          .where(inArray(listings.sourcePurchaseId, purchaseIds));
+
+        if (resaleChildren.length > 0) {
+          return NextResponse.json(
+            { error: 'Cannot delete — one or more sales from this NFT have been listed for resale' },
+            { status: 409 }
+          );
+        }
+      }
+
       const fileName = listing.imageUrl.split('/').pop() ?? '';
       if (fileName) await deleteImage(fileName);
       await db.delete(purchases).where(eq(purchases.listingId, id));
