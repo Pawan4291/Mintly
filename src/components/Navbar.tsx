@@ -34,7 +34,7 @@ export default function Navbar() {
             alt="Mintly"
             animate={{ rotate: [0, 10, -10, 0] }}
             transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut' }}
-            className="w-8 h-8 rounded-lg object-contain"
+            className="w-10 h-10 object-contain"
           />
           <span className="font-black text-xl tracking-tight">
             <span className="text-white">Mint</span>
