@@ -87,9 +87,11 @@ export default function UploadForm() {
         nftTitle: formData.title || 'Untitled NFT',
       });
       setFeePaid(true);
-    } catch (err) {
+   } catch (err) {
       setFeeError(true);
-      setErrorMsg('You cancelled the payment. Fee must be paid to list your NFT.');
+      const realMsg = err instanceof Error ? err.message : String(err);
+      setErrorMsg(`Fee payment failed: ${realMsg}`);
+      console.error('[Pay Fee] real error:', err);
     } finally {
       setPayingFee(false);
     }
