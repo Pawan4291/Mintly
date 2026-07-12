@@ -21,6 +21,9 @@ interface PurchaseRow {
     paymentRequestId: string | null;
   };
   listing: ListingCardData | null;
+  totalQuantity: number;
+  totalPaid: number;
+  txIds: string[];
 }
 
 type Tab = 'listings' | 'purchases';
@@ -210,7 +213,7 @@ export default function MyListingsPage() {
                     </Link>
                   </div>
                 ) : (
-                  myPurchases.map(({ purchase, listing }, i) => (
+                  myPurchases.map(({ purchase, listing, totalQuantity, totalPaid, txIds }, i) => (
                     <motion.div
                       key={purchase.id}
                       initial={{ opacity: 0, y: 12 }}
@@ -241,12 +244,12 @@ export default function MyListingsPage() {
                           {listing?.title ?? 'Unknown NFT'}
                         </p>
                        <p className="text-zinc-500 text-xs">
-                          Paid: <span className="text-orange-400 font-medium">{Number(purchase.priceUct).toFixed(4)} UCT</span>
-                          {purchase.quantity > 1 && <span className="text-zinc-500"> · Qty: {purchase.quantity}</span>}
+                          Paid: <span className="text-orange-400 font-medium">{totalPaid.toFixed(4)} UCT</span>
+                          {totalQuantity > 1 && <span className="text-zinc-500"> · Qty: {totalQuantity}</span>}
                         </p>
-                        {purchase.txId && (
+                        {txIds.length > 0 && (
                           <p className="text-zinc-600 text-xs font-mono truncate mt-0.5">
-                            tx: {purchase.txId.slice(0, 24)}…
+                            tx: {txIds[0].slice(0, 24)}…
                           </p>
                         )}
                       </div>
