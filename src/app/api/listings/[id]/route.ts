@@ -82,6 +82,9 @@ export async function PATCH(
     }
 
    if (action === 'destroy') {
+      if (listing.isResale) {
+        return NextResponse.json({ error: 'Resale listings cannot be permanently deleted' }, { status: 403 });
+      }
       const fileName = listing.imageUrl.split('/').pop() ?? '';
       if (fileName) await deleteImage(fileName);
       await db.delete(purchases).where(eq(purchases.listingId, id));
