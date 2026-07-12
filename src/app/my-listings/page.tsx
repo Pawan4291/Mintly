@@ -219,7 +219,7 @@ export default function MyListingsPage() {
                       initial={{ opacity: 0, y: 12 }}
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ delay: i * 0.05 }}
-                     className="relative p-4 rounded-xl flex items-center gap-4"
+                    className="p-4 rounded-xl flex items-center gap-4"
                       style={{
                         background: 'rgba(24,24,27,0.8)',
                         border: `1px solid ${
@@ -264,18 +264,18 @@ export default function MyListingsPage() {
                           {purchase.status === 'pending' && <Bot size={10} />}
                           {purchase.status}
                         </span>
-                       <p className="text-zinc-600 text-xs mt-1">
+                      <p className="text-zinc-600 text-xs mt-1">
                           {new Date(purchase.createdAt).toLocaleDateString()}
                         </p>
+                        {purchase.status === 'confirmed' && listing && (
+                          <Link
+                            href={`/resell?purchaseId=${purchase.id}&listingId=${listing.id}&maxQty=${totalQuantity}`}
+                            className="inline-block mt-2 text-xs font-semibold text-orange-400 bg-orange-500/10 border border-orange-500/30 rounded-lg px-2 py-1"
+                          >
+                            Sell Instantly
+                          </Link>
+                        )}
                       </div>
-                      {purchase.status === 'confirmed' && listing && (
-                        <Link
-                          href={`/resell?purchaseId=${purchase.id}&listingId=${listing.id}&maxQty=${totalQuantity}`}
-                          className="absolute top-2 right-2 text-xs font-semibold text-orange-400 bg-orange-500/10 border border-orange-500/30 rounded-lg px-2 py-1"
-                        >
-                          Sell Instantly
-                        </Link>
-                      )}
                     </motion.div>
                   ))
                 )}
