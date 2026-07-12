@@ -149,7 +149,7 @@ export default function MyListingsPage() {
                         <ListingCard listing={listing} index={i} />
                         {listing.status === 'listed' && (
                           <div className="flex gap-2">
-                            <button
+                           <button
                               onClick={async () => {
                                 await fetch(`/api/listings/${listing.id}`, {
                                   method: 'PATCH',
@@ -160,22 +160,24 @@ export default function MyListingsPage() {
                               }}
                               className="flex-1 py-2 rounded-lg text-xs font-semibold text-orange-400 bg-orange-500/10 border border-orange-500/30"
                             >
-                              Remove from Marketplace
+                              {listing.isResale ? 'Remove from Resell' : 'Remove from Marketplace'}
                             </button>
-                            <button
-                              onClick={async () => {
-                                if (!window.confirm('Permanently delete this NFT? This cannot be undone.')) return;
-                                await fetch(`/api/listings/${listing.id}`, {
-                                  method: 'PATCH',
-                                  headers: { 'Content-Type': 'application/json' },
-                                  body: JSON.stringify({ sellerNametag: listing.sellerNametag, action: 'destroy' }),
-                                });
-                                window.location.reload();
-                              }}
-                              className="flex-1 py-2 rounded-lg text-xs font-semibold text-red-400 bg-red-500/10 border border-red-500/30"
-                            >
-                              Delete Permanently
-                            </button>
+                            {!listing.isResale && (
+                              <button
+                                onClick={async () => {
+                                  if (!window.confirm('Permanently delete this NFT? This cannot be undone.')) return;
+                                  await fetch(`/api/listings/${listing.id}`, {
+                                    method: 'PATCH',
+                                    headers: { 'Content-Type': 'application/json' },
+                                    body: JSON.stringify({ sellerNametag: listing.sellerNametag, action: 'destroy' }),
+                                  });
+                                  window.location.reload();
+                                }}
+                                className="flex-1 py-2 rounded-lg text-xs font-semibold text-red-400 bg-red-500/10 border border-red-500/30"
+                              >
+                                Delete Permanently
+                              </button>
+                            )}
                           </div>
                         )}
                       </div>
