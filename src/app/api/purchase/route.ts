@@ -1,57 +1,100 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/db';
-import { purchases, listings } from '@/db/schema';
-import { eq, desc } from 'drizzle-orm';
+import { listings, purchases } from '@/db/schema';
+import { eq, and } from 'drizzle-orm';
 
-export async function GET(req: NextRequest) {
+export async function POST(req: NextRequest) {
   try {
-    const { searchParams } = new URL(req.url);
-    const nametag = searchParams.get('nametag');
+    const body = await req.json() as {
+      listingId: string;
+      buyerNametag: string;
+      buyerAddress: string;
+      quantity?: number;
+    };
 
-    if (!nametag) {
-      return NextResponse.json({ error: 'nametag is required' }, { status: 400 });
+    const { listingId, buyerNametag, buyerAddress } = body;
+    const quantity = Math.max(1, body.quantity ?? 1);
+
+    if (!listingId || !buyerNametag || !buyerAddress) {
+      return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
     }
 
-    const normalized = nametag.replace('@', '');
+    // Fetch the real listing
+    const [listing] = await db
+      .select()
+      .from(listings)
+      .where(eq(listings.id, listingId));
 
-    const rows = await db
-      .select({
-        purchase: purchases,
-        listing: listings,
-      })
-      .from(purchases)
-      .leftJoin(listings, eq(purchases.listingId, listings.id))
-      .where(eq(purchases.buyerNametag, normalized))
-      .orderBy(desc(purchases.createdAt));
+    if (!listing) {
+      return NextResponse.json({ error: 'Listing not found' }, { status: 404 });
+    }
 
-    // Merge rows that belong to the same listing into one card,
-    // summing quantity/price, keeping the most recent tx + status.
-    const merged = new Map<string, typeof rows[number] & { totalQuantity: number; totalPaid: number; txIds: string[] }>();
+    if (listing.status !== 'listed') {
+      return NextResponse.json(
+        { error: `Listing is ${listing.status} — cannot purchase` },
+        { status: 409 }
+      );
+    }
+   const remaining = listing.totalSupply - listing.soldCount;
+    if (remaining <= 0) {
+      return NextResponse.json({ error: 'Sold out' }, { status: 409 });
+    }
+    if (quantity > remaining) {
+      return NextResponse.json({ error: `Only ${remaining} left` }, { status: 409 });
+    }
 
-    for (const row of rows) {
-      const key = row.purchase.listingId as string;
-      const qty = row.purchase.quantity ?? 1;
-      const paid = Number(row.purchase.priceUct);
+    // Prevent self-purchase
+    const normalizedBuyer = buyerNametag.replace('@', '');
+    if (normalizedBuyer === listing.sellerNametag) {
+      return NextResponse.json({ error: 'Cannot purchase your own listing' }, { status: 400 });
+    }
 
-      if (!merged.has(key)) {
-        merged.set(key, {
-          ...row,
-          totalQuantity: qty,
-          totalPaid: paid,
-          txIds: row.purchase.txId ? [row.purchase.txId] : [],
-        });
-      } else {
-        const existing = merged.get(key)!;
-        existing.totalQuantity += qty;
-        existing.totalPaid += paid;
-        if (row.purchase.txId) existing.txIds.push(row.purchase.txId);
-        // keep the newest purchase's status/date as representative (rows already sorted desc)
+    // Enforce per-wallet max if the seller set one
+    if (listing.maxPerWallet) {
+      const priorPurchases = await db
+        .select()
+        .from(purchases)
+        .where(and(eq(purchases.listingId, listingId), eq(purchases.buyerNametag, normalizedBuyer)));
+
+      const alreadyBought = priorPurchases
+        .filter((p) => p.status !== 'failed')
+        .reduce((sum, p) => sum + (p.quantity ?? 1), 0);
+
+      if (alreadyBought + quantity > listing.maxPerWallet) {
+        return NextResponse.json(
+          { error: `Max ${listing.maxPerWallet} per wallet — you've already bought ${alreadyBought}` },
+          { status: 409 }
+        );
       }
     }
 
-    return NextResponse.json({ purchases: Array.from(merged.values()) });
+    // Insert a real pending purchase row
+    // The payment_request_id will be filled in after the Sphere intent resolves on the client
+    const [purchase] = await db
+      .insert(purchases)
+      .values({
+        listingId,
+        buyerNametag: normalizedBuyer,
+        buyerAddress,
+        sellerNametag: listing.sellerNametag,
+        priceUct: String(Number(listing.currentPriceUct) * quantity),
+        quantity,
+        paymentRequestId: null, // filled after client-side Sphere intent
+        status: 'pending',
+      })
+      .returning();
+
+    return NextResponse.json({
+      purchaseId: purchase.id,
+      listingId,
+      priceUct: purchase.priceUct,
+      sellerNametag: listing.sellerNametag,
+    });
   } catch (err) {
-    console.error('[api/my/purchases]', err);
-    return NextResponse.json({ error: 'Failed to fetch purchases' }, { status: 500 });
+    console.error('[api/purchase]', err);
+    return NextResponse.json(
+      { error: err instanceof Error ? err.message : 'Internal server error' },
+      { status: 500 }
+    );
   }
 }

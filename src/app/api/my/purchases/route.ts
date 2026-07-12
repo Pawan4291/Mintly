@@ -14,7 +14,6 @@ export async function GET(req: NextRequest) {
 
     const normalized = nametag.replace('@', '');
 
-    // Fetch real purchases for this buyer, joined with listing data
     const rows = await db
       .select({
         purchase: purchases,
@@ -25,7 +24,32 @@ export async function GET(req: NextRequest) {
       .where(eq(purchases.buyerNametag, normalized))
       .orderBy(desc(purchases.createdAt));
 
-    return NextResponse.json({ purchases: rows });
+    // Merge rows that belong to the same listing into one card,
+    // summing quantity/price, keeping the most recent tx + status.
+    const merged = new Map<string, typeof rows[number] & { totalQuantity: number; totalPaid: number; txIds: string[] }>();
+
+    for (const row of rows) {
+      const key = row.purchase.listingId as string;
+      const qty = row.purchase.quantity ?? 1;
+      const paid = Number(row.purchase.priceUct);
+
+      if (!merged.has(key)) {
+        merged.set(key, {
+          ...row,
+          totalQuantity: qty,
+          totalPaid: paid,
+          txIds: row.purchase.txId ? [row.purchase.txId] : [],
+        });
+      } else {
+        const existing = merged.get(key)!;
+        existing.totalQuantity += qty;
+        existing.totalPaid += paid;
+        if (row.purchase.txId) existing.txIds.push(row.purchase.txId);
+        // keep the newest purchase's status/date as representative (rows already sorted desc)
+      }
+    }
+
+    return NextResponse.json({ purchases: Array.from(merged.values()) });
   } catch (err) {
     console.error('[api/my/purchases]', err);
     return NextResponse.json({ error: 'Failed to fetch purchases' }, { status: 500 });
