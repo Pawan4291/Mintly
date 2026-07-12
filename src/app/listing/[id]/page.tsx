@@ -10,6 +10,7 @@ import {
   TrendingDown,
   Bot,
   ExternalLink,
+  Repeat,
 } from 'lucide-react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
@@ -38,6 +39,7 @@ interface ListingDetail {
   totalSupply: number;
   soldCount: number;
   maxPerWallet: number | null;
+  isResale: boolean;
 }
 
 export default function ListingDetailPage() {
@@ -183,10 +185,17 @@ useEffect(() => {
           >
             {/* Title & seller */}
             <div>
-              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-orange-500/10 text-orange-400 text-xs font-medium mb-2">
-                <Bot size={10} />
-                Agent-priced NFT
-              </span>
+              {listing.isResale ? (
+                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-purple-500/10 text-purple-400 text-xs font-medium mb-2">
+                  <Repeat size={10} />
+                  Resale — Fixed Price
+                </span>
+              ) : (
+                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-orange-500/10 text-orange-400 text-xs font-medium mb-2">
+                  <Bot size={10} />
+                  Agent-priced NFT
+                </span>
+              )}
               <h1 className="text-3xl font-black text-white mb-2">{listing.title}</h1>
               {listing.description && (
                 <p className="text-zinc-400 text-sm leading-relaxed">{listing.description}</p>
@@ -243,6 +252,7 @@ useEffect(() => {
                 totalSupply={listing.totalSupply}
                 soldCount={listing.soldCount}
                 maxPerWallet={listing.maxPerWallet}
+                isResale={listing.isResale}
               />
             </div>
 

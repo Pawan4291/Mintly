@@ -16,6 +16,7 @@ interface Props {
   totalSupply: number;
   soldCount: number;
   maxPerWallet: number | null;
+  isResale?: boolean;
 }
 
 type BuyState = 'idle' | 'loading' | 'success' | 'error';
@@ -29,6 +30,7 @@ export default function BuyButton({
   totalSupply,
   soldCount,
   maxPerWallet,
+  isResale = false,
 }: Props) {
   const { connected, identity, client } = useWallet();
   const [buyState, setBuyState] = useState<BuyState>('idle');
@@ -204,7 +206,7 @@ const [quantity, setQuantity] = useState(1);
       }
     }
 
-    if (confirmingDelete) {
+   if (confirmingDelete) {
       async function handleDestroy() {
         setDeleting(true);
         await fetch(`/api/listings/${listingId}`, {
@@ -222,15 +224,17 @@ const [quantity, setQuantity] = useState(1);
               disabled={deleting}
               className="flex-1 py-2.5 rounded-xl text-center text-white bg-orange-600 text-xs font-semibold hover:bg-orange-700 disabled:opacity-60"
             >
-              {deleting ? 'Removing…' : 'Remove from Marketplace'}
+              {deleting ? 'Removing…' : isResale ? 'Remove from Resell' : 'Remove from Marketplace'}
             </button>
-            <button
-              onClick={handleDestroy}
-              disabled={deleting}
-              className="flex-1 py-2.5 rounded-xl text-center text-white bg-red-600 text-xs font-semibold hover:bg-red-700 disabled:opacity-60"
-            >
-              {deleting ? 'Deleting…' : 'Delete Permanently'}
-            </button>
+            {!isResale && (
+              <button
+                onClick={handleDestroy}
+                disabled={deleting}
+                className="flex-1 py-2.5 rounded-xl text-center text-white bg-red-600 text-xs font-semibold hover:bg-red-700 disabled:opacity-60"
+              >
+                {deleting ? 'Deleting…' : 'Delete Permanently'}
+              </button>
+            )}
           </div>
           <button
             onClick={() => setConfirmingDelete(false)}
