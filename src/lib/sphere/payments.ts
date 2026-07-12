@@ -36,7 +36,7 @@ export async function createPaymentRequest(
   // Use payment_request intent — the wallet presents the seller's nametag and amount
   // to the buyer for confirmation. On confirmation the wallet sends UCT to seller.
  const result = await client.intent('send', {
-    recipient: sellerNametag.startsWith('@') ? sellerNametag : `@${sellerNametag}`,
+    to: sellerNametag.startsWith('@') ? sellerNametag : `@${sellerNametag}`,
     amount: baseUnits,
     coinId: UCT_COIN_ID,
     message: `Purchase NFT: ${nftTitle} (listing: ${listingId})`,
