@@ -85,19 +85,38 @@ const [quantity, setQuantity] = useState(1);
      const totalPrice = Number(currentPriceUct) * quantity;
       const priceBaseUnits = uctToBaseUnitsString(totalPrice);
 
-     const intentResult = await client.intent('send', {
+    const memoTag = `id: ${listingId.slice(0, 8)}`;
+
+      await client.intent('send', {
         to: sellerNametag.startsWith('@') ? sellerNametag : `@${sellerNametag}`,
         amount: priceBaseUnits,
         coinId: UCT_COIN_ID,
-        message: `Mintly NFT: ${nftTitle} x${quantity} (id: ${listingId.slice(0, 8)})`,
-      }) as { txId?: string; transferId?: string; id?: string };
+        message: `Mintly NFT: ${nftTitle} x${quantity} (${memoTag})`,
+      });
 
-      console.log('[Mintly] intent result:', JSON.stringify(intentResult));
+      // Give the wallet a moment to record the transfer, then look it up in real history
+      await new Promise((r) => setTimeout(r, 1500));
+      const history = await client.query('sphere_getHistory') as Array<{
+        type: string;
+        transferId?: string;
+        amount?: string;
+        coinId?: string;
+        memo?: string;
+        recipientNametag?: string;
+      }>;
 
-      const realTransferId = intentResult?.txId ?? intentResult?.transferId ?? intentResult?.id;
+      const match = history.find(
+        (h) =>
+          h.type === 'SENT' &&
+          h.coinId === UCT_COIN_ID &&
+          h.amount === priceBaseUnits &&
+          h.memo?.includes(memoTag)
+      );
+
+      const realTransferId = match?.transferId;
 
       if (!realTransferId) {
-        throw new Error('Payment did not return a transfer ID — cannot verify on testnet2');
+        throw new Error('Could not find the payment in wallet history — please try again');
       }
 
       if (data.purchaseId) {
