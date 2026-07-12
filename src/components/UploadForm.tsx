@@ -79,13 +79,24 @@ export default function UploadForm() {
     setFeeError(false);
     try {
       const feeAmount = Number(formData.floorPriceUct) * 0.05;
-      await createPaymentRequest(client, {
-        sellerNametag: 'mintly',
-        buyerNametag: identity.nametag ?? identity.chainPubkey,
-        amountUct: feeAmount,
-        listingId: 'listing-fee',
-        nftTitle: formData.title || 'Untitled NFT',
-      });
+      let sendError: unknown = null;
+      for (let attempt = 0; attempt < 2; attempt++) {
+        try {
+          await createPaymentRequest(client, {
+            sellerNametag: 'mintly',
+            buyerNametag: identity.nametag ?? identity.chainPubkey,
+            amountUct: feeAmount,
+            listingId: 'listing-fee',
+            nftTitle: formData.title || 'Untitled NFT',
+          });
+          sendError = null;
+          break;
+        } catch (err) {
+          sendError = err;
+          if (attempt === 0) await new Promise((r) => setTimeout(r, 2000));
+        }
+      }
+      if (sendError) throw sendError;
       setFeePaid(true);
    } catch (err) {
       setFeeError(true);

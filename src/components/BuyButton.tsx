@@ -89,12 +89,23 @@ const [quantity, setQuantity] = useState(1);
 
     const memoTag = `id: ${listingId.slice(0, 8)}`;
 
-      await client.intent('send', {
-        to: sellerNametag.startsWith('@') ? sellerNametag : `@${sellerNametag}`,
-        amount: priceBaseUnits,
-        coinId: UCT_COIN_ID,
-        message: `Mintly NFT: ${nftTitle} x${quantity} (${memoTag})`,
-      });
+      let sendError: unknown = null;
+      for (let attempt = 0; attempt < 2; attempt++) {
+        try {
+          await client.intent('send', {
+            to: sellerNametag.startsWith('@') ? sellerNametag : `@${sellerNametag}`,
+            amount: priceBaseUnits,
+            coinId: UCT_COIN_ID,
+            message: `Mintly NFT: ${nftTitle} x${quantity} (${memoTag})`,
+          });
+          sendError = null;
+          break;
+        } catch (err) {
+          sendError = err;
+          if (attempt === 0) await new Promise((r) => setTimeout(r, 2000));
+        }
+      }
+      if (sendError) throw sendError;
 
       // Give the wallet a moment to record the transfer, then look it up in real history
       await new Promise((r) => setTimeout(r, 1500));
