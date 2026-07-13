@@ -18,7 +18,7 @@ No simulated or mocked data — all listings, prices, and sales are read from an
 - Next.js (App Router) + React + TypeScript
 - Supabase Postgres (via Drizzle ORM) + Supabase Storage for images
 - `@unicitylabs/sphere-sdk` for wallet connect, payments, and balance/identity reads
-- Agent runs as a scheduled job (QStash) calling `scripts/agent-run.ts`
+- Agent runs as a scheduled job (QStash) calling an API route that invokes `runCycle.ts`
 - Hosted on Vercel
 
 ## Running locally
@@ -45,7 +45,7 @@ No simulated or mocked data — all listings, prices, and sales are read from an
 
 1. Push the repo to GitHub.
 2. Import it into Vercel and set the same environment variables from `.env.local` in the Vercel project settings.
-3. Schedule `scripts/agent-run.ts` to run periodically (e.g. every 15–30 minutes) using a scheduler such as QStash, pointing at an API route that invokes the agent cycle.
+3. Schedule the agent to run periodically (e.g. every 15–30 minutes) using QStash, pointing at an API route that invokes `runCycle.ts` on each trigger.
 
 ## Submission notes
 
